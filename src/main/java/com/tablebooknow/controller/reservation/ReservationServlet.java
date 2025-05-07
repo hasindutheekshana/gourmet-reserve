@@ -116,6 +116,10 @@ public class ReservationServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Handles the table selection page request.
+     * This method loads all available and reserved tables for the selected date and time.
+     */
     private void handleTableSelectionRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Get reservation date and time from session or request
         HttpSession session = request.getSession();
@@ -192,6 +196,9 @@ public class ReservationServlet extends HttpServlet {
         request.getRequestDispatcher("/tableSelection.jsp").forward(request, response);
     }
 
+    /**
+     * Handle AJAX request for getting all tables.
+     */
     private void handleGetAllTablesRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -234,6 +241,9 @@ public class ReservationServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Handle AJAX request for getting reserved tables.
+     */
     private void handleGetReservedTablesRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
 

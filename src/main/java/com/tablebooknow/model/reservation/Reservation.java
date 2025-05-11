@@ -128,6 +128,60 @@ public class Reservation implements Serializable {
         this.createdAt = createdAt;
     }
 
+    /**
+     * Convert the reservation to a CSV string for file storage
+     */
+    public String toCsvString() {
+        return String.format("%s,%s,%s,%s,%s,%d,%s,%s,%s,%s",
+                id,
+                userId,
+                tableId != null ? tableId : "",
+                reservationDate,
+                reservationTime,
+                duration,
+                bookingType,
+                specialRequests != null ? specialRequests.replace(",", ";;") : "",
+                status,
+                createdAt);
+    }
+
+    /**
+     * Create a reservation from a CSV string
+     */
+    public static Reservation fromCsvString(String csvLine) {
+        String[] parts = csvLine.split(",");
+        if (parts.length < 9) {
+            // Not enough parts
+            throw new IllegalArgumentException("Invalid CSV format for Reservation: " + csvLine);
+        }
+
+        int duration = 2; // Default duration
+        try {
+            duration = Integer.parseInt(parts[5]);
+        } catch (NumberFormatException e) {
+            // Use default if parsing fails
+        }
+
+        // Restore commas in special requests
+        String specialRequests = parts[7].replace(";;", ",");
+
+        // Use default createdAt if not provided
+        String createdAt = parts.length >= 10 ? parts[9] : LocalDateTime.now().toString();
+
+        return new Reservation(
+                parts[0], // id
+                parts[1], // userId
+                parts[2], // tableId
+                parts[3], // reservationDate
+                parts[4], // reservationTime
+                duration, // duration
+                parts[6], // bookingType
+                specialRequests, // specialRequests
+                parts[8], // status
+                createdAt // createdAt
+        );
+    }
+
     @Override
     public String toString() {
         return "Reservation{" +

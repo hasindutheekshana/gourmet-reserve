@@ -17,14 +17,20 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * Data Access Object for Reservation entities to handle file-based storage operations.
+ */
 public class ReservationDAO {
     private static final Logger logger = Logger.getLogger(ReservationDAO.class.getName());
     private static final String FILE_PATH = getDataFilePath("reservations.txt");
 
-
+    /**
+     * Gets the path to a data file, using the application's data directory.
+     */
     private static String getDataFilePath(String fileName) {
         String dataPath = System.getProperty("app.datapath");
 
+        // Fallback to user.dir/data if app.datapath is not set
         if (dataPath == null) {
             dataPath = System.getProperty("user.dir") + File.separator + "data";
             // Ensure the directory exists
@@ -37,9 +43,16 @@ public class ReservationDAO {
         return dataPath + File.separator + fileName;
     }
 
+    /**
+     * Creates a new reservation by appending to the reservations file.
+     * @param reservation The reservation to create
+     * @return The created reservation with assigned ID
+     */
     public Reservation create(Reservation reservation) throws IOException {
+        // Make sure the file exists
         FileHandler.ensureFileExists(FILE_PATH);
 
+        // Append reservation to the file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
             writer.write(reservation.toCsvString());
             writer.newLine();
@@ -48,6 +61,11 @@ public class ReservationDAO {
         return reservation;
     }
 
+    /**
+     * Finds a reservation by its ID.
+     * @param id The ID to search for
+     * @return The reservation or null if not found
+     */
     public Reservation findById(String id) throws IOException {
         if (!FileHandler.fileExists(FILE_PATH)) {
             return null;
@@ -64,6 +82,7 @@ public class ReservationDAO {
                         }
                     } catch (Exception e) {
                         logger.warning("Error parsing reservation line: " + line);
+                        // Continue to next line on error
                     }
                 }
             }
@@ -72,7 +91,11 @@ public class ReservationDAO {
         return null;
     }
 
-
+    /**
+     * Find reservations by user ID.
+     * @param userId The user ID to search for
+     * @return List of reservations for the specified user
+     */
     public List<Reservation> findByUserId(String userId) throws IOException {
         List<Reservation> userReservations = new ArrayList<>();
 
@@ -99,6 +122,11 @@ public class ReservationDAO {
         return userReservations;
     }
 
+    /**
+     * Find reservations by table ID.
+     * @param tableId The table ID to search for
+     * @return List of reservations for the specified table
+     */
     public List<Reservation> findByTableId(String tableId) throws IOException {
         List<Reservation> tableReservations = new ArrayList<>();
 
@@ -125,136 +153,124 @@ public class ReservationDAO {
         return tableReservations;
     }
 
-
-    public List<Reservation> findUpcomingReservations(String currentDate, String currentTime) throws IOException {
-        List<Reservation> upcomingReservations = new ArrayList<>();
+    /**
+     * Get a list of tables that are reserved for a specific date and time.
+     * This method checks for any reservations that would conflict with the given time slot.
+     *
+     * @param date The date to check
+     * @param time The starting time to check
+     * @param duration The duration in hours
+     * @return A list of table IDs that are reserved during the specified time slot
+     * @throws IOException If there's an error reading the reservation file
+     */
+    public List<String> getReservedTables(String date, String time, int duration) throws IOException {
+        List<String> reservedTables = new ArrayList<>();
 
         if (!FileHandler.fileExists(FILE_PATH)) {
-            return upcomingReservations;
+            return reservedTables;
         }
 
         try {
-            LocalDate today = LocalDate.parse(currentDate);
-            LocalTime now = LocalTime.parse(currentTime);
+            // Parse the requested time
+            LocalTime requestedTime = LocalTime.parse(time);
+            LocalTime requestedEndTime = requestedTime.plusHours(duration);
 
+            // Get all reservations for the date
             List<Reservation> allReservations = findAll();
+            logger.info("Found " + allReservations.size() + " total reservations");
 
-            for (Reservation reservation : allReservations) {
-                try {
-                    LocalDate reservationDate = LocalDate.parse(reservation.getReservationDate());
-                    LocalTime reservationTime = LocalTime.parse(reservation.getReservationTime());
+            // Filter reservations for the specified date with confirmed or pending status
+            List<Reservation> dateReservations = allReservations.stream()
+                    .filter(r -> date.equals(r.getReservationDate()) &&
+                            (r.getStatus().equals("confirmed") || r.getStatus().equals("pending")))
+                    .collect(Collectors.toList());
 
-                    if (reservationDate.isAfter(today) ||
-                            (reservationDate.isEqual(today) && reservationTime.isAfter(now))) {
-                        upcomingReservations.add(reservation);
-                    }
-                } catch (Exception e) {
-                    logger.warning("Error parsing date/time for reservation: " + reservation.getId());
+            logger.info("Found " + dateReservations.size() + " reservations for date " + date);
+
+            // Check each reservation for time conflict
+            for (Reservation reservation : dateReservations) {
+                if (reservation.getTableId() == null || reservation.getTableId().isEmpty()) {
+                    continue;
+                }
+
+                LocalTime reservationTime = LocalTime.parse(reservation.getReservationTime());
+                LocalTime reservationEndTime = reservationTime.plusHours(reservation.getDuration());
+
+                // Check if the time slots overlap
+                if (reservationTime.isBefore(requestedEndTime) &&
+                        requestedTime.isBefore(reservationEndTime)) {
+                    // Table is reserved during requested time slot
+                    logger.info("Table " + reservation.getTableId() + " is reserved at " +
+                            reservationTime + " (ending at " + reservationEndTime +
+                            ") which conflicts with requested time " + requestedTime +
+                            " (ending at " + requestedEndTime + ")");
+                    reservedTables.add(reservation.getTableId());
                 }
             }
+
+            logger.info("Returning " + reservedTables.size() + " reserved tables for date " + date +
+                    " at time " + time + " for duration " + duration);
         } catch (Exception e) {
-            logger.warning("Error finding upcoming reservations: " + e.getMessage());
+            logger.severe("Error finding reserved tables: " + e.getMessage());
+            e.printStackTrace();
         }
 
-        return upcomingReservations;
+        return reservedTables;
     }
 
-
-    public boolean update(Reservation reservation) throws IOException {
+    /**
+     * Check if a table is available at a specific date and time.
+     *
+     * @param tableId The table ID to check
+     * @param date The date to check
+     * @param time The starting time to check
+     * @param duration The duration in hours
+     * @return true if the table is available, false otherwise
+     * @throws IOException If there's an error reading the reservation file
+     */
+    public boolean isTableAvailable(String tableId, String date, String time, int duration) throws IOException {
         if (!FileHandler.fileExists(FILE_PATH)) {
-            return false;
+            // If the file doesn't exist, no reservations exist, so the table is available
+            return true;
         }
 
-        List<Reservation> reservations = findAll();
-        boolean found = false;
+        try {
+            // Parse the requested time
+            LocalTime requestedTime = LocalTime.parse(time);
+            LocalTime requestedEndTime = requestedTime.plusHours(duration);
 
-        // Replace the reservation in the list
-        for (int i = 0; i < reservations.size(); i++) {
-            if (reservations.get(i).getId().equals(reservation.getId())) {
-                reservations.set(i, reservation);
-                found = true;
-                break;
-            }
-        }
+            // Get all reservations for the specified table and date
+            List<Reservation> tableReservations = findAll().stream()
+                    .filter(r -> tableId.equals(r.getTableId()) &&
+                            date.equals(r.getReservationDate()) &&
+                            (r.getStatus().equals("confirmed") || r.getStatus().equals("pending")))
+                    .collect(Collectors.toList());
 
-        if (!found) {
-            return false;
-        }
+            logger.info("Found " + tableReservations.size() + " reservations for table " + tableId +
+                    " on date " + date);
 
-        // Write all reservations back to the file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (Reservation r : reservations) {
-                writer.write(r.toCsvString());
-                writer.newLine();
-            }
-        }
+            // Check for time conflicts
+            for (Reservation reservation : tableReservations) {
+                LocalTime reservationTime = LocalTime.parse(reservation.getReservationTime());
+                LocalTime reservationEndTime = reservationTime.plusHours(reservation.getDuration());
 
-        return true;
-    }
-
-    public boolean cancelReservation(String id) throws IOException {
-        Reservation reservation = findById(id);
-        if (reservation == null) {
-            return false;
-        }
-
-        reservation.setStatus("cancelled");
-        return update(reservation);
-    }
-
-    public boolean delete(String id) throws IOException {
-        if (!FileHandler.fileExists(FILE_PATH)) {
-            return false;
-        }
-
-        List<Reservation> reservations = findAll();
-        boolean found = false;
-
-        // Remove the reservation from the list
-        for (int i = 0; i < reservations.size(); i++) {
-            if (reservations.get(i).getId().equals(id)) {
-                reservations.remove(i);
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            return false;
-        }
-
-        // Write all reservations back to the file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (Reservation r : reservations) {
-                writer.write(r.toCsvString());
-                writer.newLine();
-            }
-        }
-
-        return true;
-    }
-
-    public List<Reservation> findAll() throws IOException {
-        List<Reservation> reservations = new ArrayList<>();
-
-        if (!FileHandler.fileExists(FILE_PATH)) {
-            return reservations;
-        }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    try {
-                        reservations.add(Reservation.fromCsvString(line));
-                    } catch (Exception e) {
-                        logger.warning("Error parsing reservation line: " + line);
-
-                    }
+                // Check if the time slots overlap
+                if (reservationTime.isBefore(requestedEndTime) &&
+                        requestedTime.isBefore(reservationEndTime)) {
+                    // Time conflict, table is not available
+                    logger.info("Table " + tableId + " is NOT available due to existing reservation: " +
+                            reservation.getId() + " at time " + reservationTime);
+                    return false;
                 }
             }
-        }
 
-        return reservations;
+            // No conflicts found, table is available
+            logger.info("Table " + tableId + " is available at " + time + " for " + duration + " hours");
+            return true;
+        } catch (Exception e) {
+            logger.severe("Error checking table availability: " + e.getMessage());
+            e.printStackTrace();
+            // If an error occurs, conservatively return false (not available)
+            return false;
+        }
     }
-}

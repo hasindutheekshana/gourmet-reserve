@@ -17,20 +17,14 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-/**
- * Data Access Object for Reservation entities to handle file-based storage operations.
- */
 public class ReservationDAO {
     private static final Logger logger = Logger.getLogger(ReservationDAO.class.getName());
     private static final String FILE_PATH = getDataFilePath("reservations.txt");
 
-    /**
-     * Gets the path to a data file, using the application's data directory.
-     */
+
     private static String getDataFilePath(String fileName) {
         String dataPath = System.getProperty("app.datapath");
 
-        // Fallback to user.dir/data if app.datapath is not set
         if (dataPath == null) {
             dataPath = System.getProperty("user.dir") + File.separator + "data";
             // Ensure the directory exists
@@ -43,16 +37,9 @@ public class ReservationDAO {
         return dataPath + File.separator + fileName;
     }
 
-    /**
-     * Creates a new reservation by appending to the reservations file.
-     * @param reservation The reservation to create
-     * @return The created reservation with assigned ID
-     */
     public Reservation create(Reservation reservation) throws IOException {
-        // Make sure the file exists
         FileHandler.ensureFileExists(FILE_PATH);
 
-        // Append reservation to the file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
             writer.write(reservation.toCsvString());
             writer.newLine();
@@ -61,11 +48,6 @@ public class ReservationDAO {
         return reservation;
     }
 
-    /**
-     * Finds a reservation by its ID.
-     * @param id The ID to search for
-     * @return The reservation or null if not found
-     */
     public Reservation findById(String id) throws IOException {
         if (!FileHandler.fileExists(FILE_PATH)) {
             return null;
@@ -82,7 +64,6 @@ public class ReservationDAO {
                         }
                     } catch (Exception e) {
                         logger.warning("Error parsing reservation line: " + line);
-                        // Continue to next line on error
                     }
                 }
             }
@@ -91,11 +72,7 @@ public class ReservationDAO {
         return null;
     }
 
-    /**
-     * Find reservations by user ID.
-     * @param userId The user ID to search for
-     * @return List of reservations for the specified user
-     */
+
     public List<Reservation> findByUserId(String userId) throws IOException {
         List<Reservation> userReservations = new ArrayList<>();
 
@@ -122,11 +99,67 @@ public class ReservationDAO {
         return userReservations;
     }
 
-    /**
-     * Updates a reservation's information.
-     * @param reservation The reservation to update
-     * @return true if successful, false otherwise
-     */
+    public List<Reservation> findByTableId(String tableId) throws IOException {
+        List<Reservation> tableReservations = new ArrayList<>();
+
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return tableReservations;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    try {
+                        Reservation reservation = Reservation.fromCsvString(line);
+                        if (tableId.equals(reservation.getTableId())) {
+                            tableReservations.add(reservation);
+                        }
+                    } catch (Exception e) {
+                        logger.warning("Error parsing reservation line: " + line);
+                    }
+                }
+            }
+        }
+
+        return tableReservations;
+    }
+
+
+    public List<Reservation> findUpcomingReservations(String currentDate, String currentTime) throws IOException {
+        List<Reservation> upcomingReservations = new ArrayList<>();
+
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return upcomingReservations;
+        }
+
+        try {
+            LocalDate today = LocalDate.parse(currentDate);
+            LocalTime now = LocalTime.parse(currentTime);
+
+            List<Reservation> allReservations = findAll();
+
+            for (Reservation reservation : allReservations) {
+                try {
+                    LocalDate reservationDate = LocalDate.parse(reservation.getReservationDate());
+                    LocalTime reservationTime = LocalTime.parse(reservation.getReservationTime());
+
+                    if (reservationDate.isAfter(today) ||
+                            (reservationDate.isEqual(today) && reservationTime.isAfter(now))) {
+                        upcomingReservations.add(reservation);
+                    }
+                } catch (Exception e) {
+                    logger.warning("Error parsing date/time for reservation: " + reservation.getId());
+                }
+            }
+        } catch (Exception e) {
+            logger.warning("Error finding upcoming reservations: " + e.getMessage());
+        }
+
+        return upcomingReservations;
+    }
+
+
     public boolean update(Reservation reservation) throws IOException {
         if (!FileHandler.fileExists(FILE_PATH)) {
             return false;
@@ -159,10 +192,48 @@ public class ReservationDAO {
         return true;
     }
 
-    /**
-     * Gets all reservations from the file.
-     * @return List of all reservations
-     */
+    public boolean cancelReservation(String id) throws IOException {
+        Reservation reservation = findById(id);
+        if (reservation == null) {
+            return false;
+        }
+
+        reservation.setStatus("cancelled");
+        return update(reservation);
+    }
+
+    public boolean delete(String id) throws IOException {
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return false;
+        }
+
+        List<Reservation> reservations = findAll();
+        boolean found = false;
+
+        // Remove the reservation from the list
+        for (int i = 0; i < reservations.size(); i++) {
+            if (reservations.get(i).getId().equals(id)) {
+                reservations.remove(i);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return false;
+        }
+
+        // Write all reservations back to the file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Reservation r : reservations) {
+                writer.write(r.toCsvString());
+                writer.newLine();
+            }
+        }
+
+        return true;
+    }
+
     public List<Reservation> findAll() throws IOException {
         List<Reservation> reservations = new ArrayList<>();
 
@@ -178,7 +249,7 @@ public class ReservationDAO {
                         reservations.add(Reservation.fromCsvString(line));
                     } catch (Exception e) {
                         logger.warning("Error parsing reservation line: " + line);
-                        // Continue to next line on error
+
                     }
                 }
             }

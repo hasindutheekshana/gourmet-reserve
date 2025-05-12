@@ -8,12 +8,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-
 public class ReservationQueue {
     private List<Reservation> queue;
 
     public ReservationQueue() {
-
         this.queue = new ArrayList<>();
     }
 
@@ -86,7 +84,6 @@ public class ReservationQueue {
                 Reservation leftRes = left.get(leftIndex);
                 Reservation rightRes = right.get(rightIndex);
 
-                // Compare reservation times
                 LocalTime leftTime = LocalTime.parse(leftRes.getReservationTime());
                 LocalTime rightTime = LocalTime.parse(rightRes.getReservationTime());
 
@@ -98,7 +95,6 @@ public class ReservationQueue {
                     rightIndex++;
                 }
             } catch (Exception e) {
-                // In case of parsing error, add both reservations and continue
                 if (leftIndex < left.size()) {
                     result.add(left.get(leftIndex));
                     leftIndex++;
@@ -110,7 +106,6 @@ public class ReservationQueue {
             }
         }
 
-        // Add any remaining elements
         while (leftIndex < left.size()) {
             result.add(left.get(leftIndex));
             leftIndex++;
@@ -156,7 +151,6 @@ public class ReservationQueue {
                 LocalTime reservationTime = LocalTime.parse(reservation.getReservationTime());
                 LocalTime reservationEndTime = reservationTime.plusHours(reservation.getDuration());
 
-                // Check for overlap
                 if (requestedTime.isBefore(reservationEndTime) &&
                         reservationTime.isBefore(requestedEndTime)) {
                     return false;

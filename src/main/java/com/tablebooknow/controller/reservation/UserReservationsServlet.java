@@ -17,6 +17,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @WebServlet("/user/reservations")
 public class UserReservationsServlet extends HttpServlet {
     private ReservationDAO reservationDAO;
@@ -28,7 +29,7 @@ public class UserReservationsServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Check if user is logged in
+
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
             response.sendRedirect(request.getContextPath() + "/login.jsp");
@@ -38,16 +39,12 @@ public class UserReservationsServlet extends HttpServlet {
         String userId = (String) session.getAttribute("userId");
 
         try {
-            // Get all reservations for this user
             List<Reservation> userReservations = reservationDAO.findByUserId(userId);
 
-            // Sort reservations using merge sort - by date and time
             userReservations = mergeSortReservations(userReservations);
 
-            // Set as request attribute
             request.setAttribute("userReservations", userReservations);
 
-            // Forward to the JSP
             request.getRequestDispatcher("/user-reservations.jsp").forward(request, response);
 
         } catch (Exception e) {
@@ -58,7 +55,7 @@ public class UserReservationsServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Check if user is logged in
+
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
             response.sendRedirect(request.getContextPath() + "/login.jsp");
@@ -71,12 +68,11 @@ public class UserReservationsServlet extends HttpServlet {
 
         if ("cancel".equals(action) && reservationId != null) {
             try {
-                // Get the reservation
+
                 Reservation reservation = reservationDAO.findById(reservationId);
 
-                // Verify the reservation belongs to this user
                 if (reservation != null && reservation.getUserId().equals(userId)) {
-                    // Cancel the reservation
+
                     boolean success = reservationDAO.cancelReservation(reservationId);
 
                     if (success) {
@@ -91,31 +87,26 @@ public class UserReservationsServlet extends HttpServlet {
                 request.setAttribute("errorMessage", "Error cancelling reservation: " + e.getMessage());
             }
 
-            // Redirect to GET to refresh the list
             response.sendRedirect(request.getContextPath() + "/user/reservations");
             return;
         }
 
-        // Default: redirect to GET
         response.sendRedirect(request.getContextPath() + "/user/reservations");
     }
 
     private List<Reservation> mergeSortReservations(List<Reservation> reservations) {
-        // Base case: if the list has 0 or 1 elements, it's already sorted
+
         if (reservations.size() <= 1) {
             return reservations;
         }
 
-        // Divide the list into two halves
         int mid = reservations.size() / 2;
         List<Reservation> left = new ArrayList<>(reservations.subList(0, mid));
         List<Reservation> right = new ArrayList<>(reservations.subList(mid, reservations.size()));
 
-        // Recursively sort both halves
         left = mergeSortReservations(left);
         right = mergeSortReservations(right);
 
-        // Merge the sorted halves
         return mergeReservations(left, right);
     }
 
@@ -129,14 +120,14 @@ public class UserReservationsServlet extends HttpServlet {
             Reservation rightRes = right.get(rightIndex);
 
             try {
-                // First compare by date
+
                 LocalDate leftDate = LocalDate.parse(leftRes.getReservationDate());
                 LocalDate rightDate = LocalDate.parse(rightRes.getReservationDate());
 
                 int dateComparison = rightDate.compareTo(leftDate); // Descending by date (newest first)
 
                 if (dateComparison != 0) {
-                    // Dates are different, so we can decide based on the date comparison
+
                     if (dateComparison > 0) {
                         result.add(leftRes);
                         leftIndex++;
@@ -145,7 +136,7 @@ public class UserReservationsServlet extends HttpServlet {
                         rightIndex++;
                     }
                 } else {
-                    // Dates are the same, so compare by time
+
                     LocalTime leftTime = LocalTime.parse(leftRes.getReservationTime());
                     LocalTime rightTime = LocalTime.parse(rightRes.getReservationTime());
 
@@ -158,10 +149,9 @@ public class UserReservationsServlet extends HttpServlet {
                     }
                 }
             } catch (DateTimeParseException e) {
-                // Handle parsing errors gracefully
+
                 System.err.println("Error parsing dates for sorting: " + e.getMessage());
 
-                // Fall back to string comparison if parsing fails
                 int dateComparison = rightRes.getReservationDate().compareTo(leftRes.getReservationDate());
 
                 if (dateComparison != 0) {
@@ -185,7 +175,6 @@ public class UserReservationsServlet extends HttpServlet {
             }
         }
 
-        // Add any remaining elements
         while (leftIndex < left.size()) {
             result.add(left.get(leftIndex));
             leftIndex++;

@@ -24,4 +24,8 @@ public class FileHandler {
             System.out.println("Created file: " + path.toAbsolutePath());
         }
     }
+
+    public static boolean fileExists(String filePath) {
+        return Files.exists(Paths.get(filePath));
+    }
 }

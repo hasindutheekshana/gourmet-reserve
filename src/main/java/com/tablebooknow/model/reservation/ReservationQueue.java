@@ -6,103 +6,171 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.stream.Collectors;
 
 public class ReservationQueue {
-    private List<Reservation> queue;
+    private List<Reservation> reservations;
+    private Queue<String> pendingQueue;
 
     public ReservationQueue() {
-        this.queue = new ArrayList<>();
-    }
-
-    public void enqueue(Reservation reservation) {
-        queue.add(reservation);
-    }
-
-    public Reservation dequeue() {
-        if (isEmpty()) {
-            return null;
-        }
-        return queue.remove(0);
-    }
-
-    public Reservation peek() {
-        if (isEmpty()) {
-            return null;
-        }
-        return queue.get(0);
-    }
-
-    public boolean isEmpty() {
-        return queue.isEmpty();
-    }
-
-    public int size() {
-        return queue.size();
-    }
-
-    public List<Reservation> getAllReservations() {
-        return new ArrayList<>(queue);
+        this.reservations = new ArrayList<>();
+        this.pendingQueue = new LinkedList<>();
     }
 
     public void clear() {
-        queue.clear();
+        this.reservations.clear();
+        this.pendingQueue.clear();
     }
 
-    public void sortByTime() {
-        if (queue.size() <= 1) {
-            return;
+    public ReservationQueue(List<Reservation> reservations) {
+        this.reservations = new ArrayList<>(reservations);
+        this.pendingQueue = new LinkedList<>();
+
+        // Initialize the queue with pending reservation IDs
+        for (Reservation reservation : reservations) {
+            if ("pending".equals(reservation.getStatus())) {
+                pendingQueue.add(reservation.getId());
+            }
+        }
+    }
+
+    public void enqueue(Reservation reservation) {
+        reservations.add(reservation);
+        if ("pending".equals(reservation.getStatus())) {
+            pendingQueue.add(reservation.getId());
+        }
+    }
+
+    public Reservation dequeue() {
+        if (pendingQueue.isEmpty()) {
+            return null;
         }
 
-        List<Reservation> sorted = mergeSort(queue);
-        queue.clear();
-        queue.addAll(sorted);
+        String nextId = pendingQueue.poll();
+        return findReservationById(nextId);
     }
 
-    private List<Reservation> mergeSort(List<Reservation> reservations) {
-        if (reservations.size() <= 1) {
-            return reservations;
+    public boolean isEmpty() {
+        return pendingQueue.isEmpty();
+    }
+
+    public int size() {
+        return pendingQueue.size();
+    }
+
+    public List<Reservation> getAllReservations() {
+        return new ArrayList<>(reservations);
+    }
+
+    public List<Reservation> findPendingReservations() {
+        return reservations.stream()
+                .filter(r -> "pending".equals(r.getStatus()))
+                .collect(Collectors.toList());
+    }
+
+    public Reservation peekNextPending() {
+        if (pendingQueue.isEmpty()) {
+            return null;
         }
 
-        int mid = reservations.size() / 2;
-        List<Reservation> left = new ArrayList<>(reservations.subList(0, mid));
-        List<Reservation> right = new ArrayList<>(reservations.subList(mid, reservations.size()));
-
-        left = mergeSort(left);
-        right = mergeSort(right);
-
-        return merge(left, right);
+        String nextId = pendingQueue.peek();
+        return findReservationById(nextId);
     }
 
-    private List<Reservation> merge(List<Reservation> left, List<Reservation> right) {
-        List<Reservation> result = new ArrayList<>();
+    public Reservation processNextReservation() {
+        if (pendingQueue.isEmpty()) {
+            return null;
+        }
+
+        String nextId = pendingQueue.poll();
+        Reservation nextReservation = findReservationById(nextId);
+
+        if (nextReservation != null) {
+            nextReservation.setStatus("confirmed");
+        }
+
+        return nextReservation;
+    }
+
+    public boolean removeReservation(String reservationId) {
+        boolean removed = false;
+
+        // Remove from main list
+        removed = reservations.removeIf(r -> r.getId().equals(reservationId));
+
+        // Remove from pending queue if present
+        pendingQueue.remove(reservationId);
+
+        return removed;
+    }
+
+    public Reservation findReservationById(String id) {
+        return reservations.stream()
+                .filter(r -> r.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public List<Reservation> filterByStatus(String status) {
+        return reservations.stream()
+                .filter(r -> status.equals(r.getStatus()))
+                .collect(Collectors.toList());
+    }
+
+    public boolean prioritize(String reservationId) {
+
+        Reservation reservation = findReservationById(reservationId);
+        if (reservation == null || !"pending".equals(reservation.getStatus())) {
+            return false;
+        }
+
+        if (pendingQueue.remove(reservationId)) {
+
+            Queue<String> newQueue = new LinkedList<>();
+            newQueue.add(reservationId);
+            newQueue.addAll(pendingQueue);
+            pendingQueue = newQueue;
+            return true;
+        }
+
+        return false;
+    }
+
+    public ReservationQueue sortByTime() {
+        List<Reservation> sortedList = mergeSort(reservations, Comparator
+                .comparing(Reservation::getReservationDate)
+                .thenComparing(Reservation::getReservationTime));
+
+        return new ReservationQueue(sortedList);
+    }
+
+    private <T> List<T> mergeSort(List<T> list, Comparator<T> comparator) {
+        if (list.size() <= 1) {
+            return list;
+        }
+
+        int mid = list.size() / 2;
+        List<T> left = mergeSort(list.subList(0, mid), comparator);
+        List<T> right = mergeSort(list.subList(mid, list.size()), comparator);
+
+        return merge(left, right, comparator);
+    }
+
+    private <T> List<T> merge(List<T> left, List<T> right, Comparator<T> comparator) {
+        List<T> result = new ArrayList<>();
         int leftIndex = 0;
         int rightIndex = 0;
 
         while (leftIndex < left.size() && rightIndex < right.size()) {
-            try {
-                Reservation leftRes = left.get(leftIndex);
-                Reservation rightRes = right.get(rightIndex);
-
-                LocalTime leftTime = LocalTime.parse(leftRes.getReservationTime());
-                LocalTime rightTime = LocalTime.parse(rightRes.getReservationTime());
-
-                if (leftTime.isBefore(rightTime) || leftTime.equals(rightTime)) {
-                    result.add(leftRes);
-                    leftIndex++;
-                } else {
-                    result.add(rightRes);
-                    rightIndex++;
-                }
-            } catch (Exception e) {
-                if (leftIndex < left.size()) {
-                    result.add(left.get(leftIndex));
-                    leftIndex++;
-                }
-                if (rightIndex < right.size()) {
-                    result.add(right.get(rightIndex));
-                    rightIndex++;
-                }
+            if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) <= 0) {
+                result.add(left.get(leftIndex));
+                leftIndex++;
+            } else {
+                result.add(right.get(rightIndex));
+                rightIndex++;
             }
         }
 
@@ -122,7 +190,7 @@ public class ReservationQueue {
     public List<Reservation> findByTableAndDate(String tableId, String date) {
         List<Reservation> result = new ArrayList<>();
 
-        for (Reservation reservation : queue) {
+        for (Reservation reservation : reservations) {
             if (reservation.getTableId() != null &&
                     reservation.getTableId().equals(tableId) &&
                     reservation.getReservationDate() != null &&

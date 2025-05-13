@@ -1,4 +1,4 @@
-package tablebooknow.model.payment;
+package com.tablebooknow.model.payment;
 
 import java.io.Serializable;
 import java.math.BigDecimal;

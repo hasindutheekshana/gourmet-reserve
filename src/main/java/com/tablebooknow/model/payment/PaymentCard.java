@@ -1,4 +1,4 @@
-package tablebooknow.model.payment;
+package com.tablebooknow.model.payment;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -13,11 +13,16 @@ public class PaymentCard implements Serializable {
     private String cvv;
     private String cardType;
     private boolean defaultCard;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
 
 
     public PaymentCard() {
         this.id = UUID.randomUUID().toString();
         this.defaultCard = false;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public PaymentCard(String id, String userId, String cardholderName, String cardNumber,
@@ -31,7 +36,8 @@ public class PaymentCard implements Serializable {
         this.cvv = cvv;
         this.cardType = cardType;
         this.defaultCard = defaultCard;
-
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public String getId() {
@@ -98,6 +104,22 @@ public class PaymentCard implements Serializable {
         this.defaultCard = defaultCard;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
 
     public String getLast4Digits() {
         if (cardNumber == null || cardNumber.length() < 4) {
@@ -138,7 +160,9 @@ public class PaymentCard implements Serializable {
                 expiryDate != null ? expiryDate : "",
                 cvv != null ? cvv : "",
                 cardType != null ? cardType : "",
-                defaultCard);
+                defaultCard,
+                createdAt != null ? createdAt.toString() : "",
+                updatedAt != null ? updatedAt.toString() : "");
     }
 
     public static PaymentCard fromCsvString(String csvLine) {
@@ -190,6 +214,7 @@ public class PaymentCard implements Serializable {
                 ", expiryDate='" + expiryDate + '\'' +
                 ", cardType='" + cardType + '\'' +
                 ", defaultCard=" + defaultCard +
+                ", createdAt=" + createdAt +
                 '}';
     }
 }

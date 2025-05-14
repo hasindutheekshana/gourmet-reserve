@@ -37,6 +37,7 @@ public class UserDAO {
 
         return user;
     }
+
     public User findById(String id) throws IOException {
         if (!FileHandler.fileExists(FILE_PATH)) {
             return null;
@@ -142,4 +143,38 @@ public class UserDAO {
 
         return true;
     }
+
+
+    public boolean update(User user) throws IOException {
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return false;
+        }
+
+        List<User> users = findAll();
+        boolean found = false;
+
+
+        for (int i = 0; i < users.size(); i++) {
+            if (users.get(i).getId().equals(user.getId())) {
+                users.set(i, user);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return false;
+        }
+
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (User u : users) {
+                writer.write(u.toCsvString());
+                writer.newLine();
+            }
+        }
+
+        return true;
+    }
 }
+

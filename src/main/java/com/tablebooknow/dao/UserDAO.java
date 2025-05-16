@@ -2,7 +2,6 @@ package com.tablebooknow.dao;
 
 import com.tablebooknow.model.user.User;
 import com.tablebooknow.util.FileHandler;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;

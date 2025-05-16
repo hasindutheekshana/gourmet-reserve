@@ -242,4 +242,19 @@ public class ReviewDAO {
         return reviews;
     }
 
+    public double getAverageRating() throws IOException {
+        List<Review> reviews = findAll();
+
+        if (reviews.isEmpty()) {
+            return 0;
+        }
+
+        int sum = 0;
+        for (Review review : reviews) {
+            sum += review.getRating();
+        }
+
+        return (double) sum / reviews.size();
+    }
 }
+

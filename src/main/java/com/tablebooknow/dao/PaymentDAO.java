@@ -71,6 +71,59 @@ public class PaymentDAO {
         return null;
     }
 
+    public List<Payment> findByUserId(String userId) throws IOException {
+        List<Payment> userPayments = new ArrayList<>();
+
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return userPayments;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    try {
+                        Payment payment = Payment.fromCsvString(line);
+                        if (payment.getUserId().equals(userId)) {
+                            userPayments.add(payment);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error parsing payment line: " + line);
+                    }
+                }
+            }
+        }
+
+        return userPayments;
+    }
+
+    public List<Payment> findByReservationId(String reservationId) throws IOException {
+        List<Payment> reservationPayments = new ArrayList<>();
+
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return reservationPayments;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    try {
+                        Payment payment = Payment.fromCsvString(line);
+                        if (payment.getReservationId().equals(reservationId)) {
+                            reservationPayments.add(payment);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error parsing payment line: " + line);
+                        // Continue to next line on error
+                    }
+                }
+            }
+        }
+
+        return reservationPayments;
+    }
+
     public List<Payment> findAll() throws IOException {
         List<Payment> payments = new ArrayList<>();
 
@@ -94,5 +147,46 @@ public class PaymentDAO {
         return payments;
     }
 
+    public boolean update(Payment payment) throws IOException {
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return false;
+        }
 
+        List<Payment> payments = findAll();
+        boolean found = false;
+
+        for (int i = 0; i < payments.size(); i++) {
+            if (payments.get(i).getId().equals(payment.getId())) {
+                payments.set(i, payment);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return false;
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Payment p : payments) {
+                writer.write(p.toCsvString());
+                writer.newLine();
+            }
+        }
+        return true;
+    }
+
+    public boolean updateStatus(String id, String status) throws IOException {
+        Payment payment = findById(id);
+        if (payment == null) {
+            return false;
+        }
+
+        payment.setStatus(status);
+        if (status.equals("COMPLETED")) {
+            payment.setCompletedAt(java.time.LocalDateTime.now());
+        }
+
+        return update(payment);
+    }
 }

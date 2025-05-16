@@ -74,6 +74,32 @@ public class PaymentCardDAO {
         return null;
     }
 
+    public List<PaymentCard> findByUserId(String userId) throws IOException {
+        List<PaymentCard> userCards = new ArrayList<>();
+
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return userCards;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    try {
+                        PaymentCard card = PaymentCard.fromCsvString(line);
+                        if (card.getUserId().equals(userId)) {
+                            userCards.add(card);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error parsing payment card line: " + line);
+                    }
+                }
+            }
+        }
+
+        return userCards;
+    }
+
     public List<PaymentCard> findAll() throws IOException {
         List<PaymentCard> cards = new ArrayList<>();
 
@@ -95,6 +121,54 @@ public class PaymentCardDAO {
         }
 
         return cards;
+    }
+
+    public PaymentCard findDefaultCard(String userId) throws IOException {
+        List<PaymentCard> userCards = findByUserId(userId);
+
+        for (PaymentCard card : userCards) {
+            if (card.isDefaultCard()) {
+                return card;
+            }
+        }
+
+        if (!userCards.isEmpty()) {
+            return userCards.get(0);
+        }
+
+        return null;
+    }
+
+    public boolean update(PaymentCard card) throws IOException {
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return false;
+        }
+
+        List<PaymentCard> cards = findAll();
+        boolean found = false;
+
+        card.setUpdatedAt(LocalDateTime.now());
+
+        for (int i = 0; i < cards.size(); i++) {
+            if (cards.get(i).getId().equals(card.getId())) {
+                cards.set(i, card);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return false;
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (PaymentCard c : cards) {
+                writer.write(c.toCsvString());
+                writer.newLine();
+            }
+        }
+
+        return true;
     }
 
 }

@@ -30,15 +30,7 @@ public class FileHandler {
     }
 
 
-    public static boolean deleteFile(String filePath) throws IOException {
-        Path path = Paths.get(filePath);
-        if (Files.exists(path)) {
-            Files.delete(path);
-            System.out.println("Deleted file: " + path.toAbsolutePath());
-            return true;
-        }
-        return false;
-    }
+
 }
 
 

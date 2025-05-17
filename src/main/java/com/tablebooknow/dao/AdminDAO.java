@@ -86,7 +86,6 @@ public class AdminDAO {
         return null;
     }
 
-
     public Admin findByUsername(String username) throws IOException {
         if (!FileHandler.fileExists(FILE_PATH)) {
             return null;
@@ -110,7 +109,6 @@ public class AdminDAO {
 
         return null;
     }
-
 
     public Admin findByEmail(String email) throws IOException {
         if (!FileHandler.fileExists(FILE_PATH)) {
@@ -136,8 +134,6 @@ public class AdminDAO {
         return null;
     }
 
-
-
     public List<Admin> findAll() throws IOException {
         List<Admin> admins = new ArrayList<>();
 
@@ -161,5 +157,64 @@ public class AdminDAO {
         return admins;
     }
 
+    public boolean update(Admin admin) throws IOException {
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return false;
+        }
 
+        List<Admin> admins = findAll();
+        boolean found = false;
+
+        for (int i = 0; i < admins.size(); i++) {
+            if (admins.get(i).getId().equals(admin.getId())) {
+                admins.set(i, admin);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return false;
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Admin a : admins) {
+                writer.write(a.toCsvString());
+                writer.newLine();
+            }
+        }
+
+        return true;
+    }
+
+
+    public boolean delete(String id) throws IOException {
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return false;
+        }
+
+        List<Admin> admins = findAll();
+        boolean found = false;
+
+        for (int i = 0; i < admins.size(); i++) {
+            if (admins.get(i).getId().equals(id)) {
+                admins.remove(i);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return false;
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Admin a : admins) {
+                writer.write(a.toCsvString());
+                writer.newLine();
+            }
+        }
+
+        return true;
+    }
 }

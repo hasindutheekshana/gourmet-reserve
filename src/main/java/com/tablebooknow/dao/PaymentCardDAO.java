@@ -171,4 +171,32 @@ public class PaymentCardDAO {
         return true;
     }
 
+    public boolean delete(String id) throws IOException {
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return false;
+        }
+
+        List<PaymentCard> cards = findAll();
+        boolean found = false;
+
+        for (int i = 0; i < cards.size(); i++) {
+            if (cards.get(i).getId().equals(id)) {
+                cards.remove(i);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return false;
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (PaymentCard c : cards) {
+                writer.write(c.toCsvString());
+                writer.newLine();
+            }
+        }
+        return true;
+    }
 }

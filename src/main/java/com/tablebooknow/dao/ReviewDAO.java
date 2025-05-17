@@ -156,6 +156,28 @@ public class ReviewDAO {
         return false;
     }
 
+    public List<Review> findAll() throws IOException {
+        List<Review> reviews = new ArrayList<>();
+
+        if (!FileHandler.fileExists(FILE_PATH)) {
+            return reviews;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    try {
+                        reviews.add(Review.fromCsvString(line));
+                    } catch (Exception e) {
+                        logger.warning("Error parsing review line: " + line);
+                    }
+                }
+            }
+        }
+
+        return reviews;
+    }
 
     public boolean update(Review review) throws IOException {
         if (!FileHandler.fileExists(FILE_PATH)) {
@@ -219,28 +241,7 @@ public class ReviewDAO {
         return true;
     }
 
-    public List<Review> findAll() throws IOException {
-        List<Review> reviews = new ArrayList<>();
 
-        if (!FileHandler.fileExists(FILE_PATH)) {
-            return reviews;
-        }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    try {
-                        reviews.add(Review.fromCsvString(line));
-                    } catch (Exception e) {
-                        logger.warning("Error parsing review line: " + line);
-                    }
-                }
-            }
-        }
-
-        return reviews;
-    }
 
     public double getAverageRating() throws IOException {
         List<Review> reviews = findAll();

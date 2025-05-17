@@ -48,6 +48,9 @@ public class UserServlet extends HttpServlet {
         }
 
         switch (pathInfo) {
+            case "/login":
+                login(request, response);
+                break;
             case "/register":
                 register(request, response);
                 break;
@@ -106,5 +109,38 @@ public class UserServlet extends HttpServlet {
         }
     }
 
+    private void login(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
 
+        if (username == null || password == null || username.trim().isEmpty() || password.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "Username and password are required");
+            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            return;
+        }
+
+        try {
+            User user = userDAO.findByUsername(username);
+
+            if (user != null && PasswordHasher.checkPassword(password, user.getPassword())) {
+                HttpSession session = request.getSession();
+                session.setAttribute("user", user);
+                session.setAttribute("userId", user.getId());
+                session.setAttribute("username", user.getUsername());
+                session.setAttribute("isAdmin", user.isAdmin());
+
+                if (user.isAdmin()) {
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/?showPreloader=true");
+                }
+            } else {
+                request.setAttribute("errorMessage", "Invalid username or password");
+                request.getRequestDispatcher("/login.jsp").forward(request, response);
+            }
+        } catch (Exception e) {
+            request.setAttribute("errorMessage", "An error occurred during login: " + e.getMessage());
+            request.getRequestDispatcher("/login.jsp").forward(request, response);
+        }
+    }
 }

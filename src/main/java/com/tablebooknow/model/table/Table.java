@@ -201,51 +201,59 @@ public class Table implements Serializable {
      * Throws IllegalArgumentException if the CSV string is invalid or malformed.
      */
     public static Table fromCsvString(String csvLine) {
+        // Validate that the CSV string is not null or empty (after trimming whitespace)
         if (csvLine == null || csvLine.trim().isEmpty()) {
             throw new IllegalArgumentException("Empty or null CSV line");
         }
 
+        // Split the CSV string into parts using comma as the delimiter
         String[] parts = csvLine.split(",");
+        // Ensure the CSV string has at least 7 parts to match the expected Table fields
         if (parts.length < 7) {
             throw new IllegalArgumentException("Invalid CSV format for Table: " + csvLine);
         }
 
-        // Parse capacity and floor
+        // Parse capacity and floor, defaulting to 0 if parsing fails
         int capacity = 0;
         int floor = 0;
         try {
-            capacity = Integer.parseInt(parts[3]);
+            capacity = Integer.parseInt(parts[3]); // Parse capacity from the 4th field
             floor = Integer.parseInt(parts[4]);
         } catch (NumberFormatException e) {
-            // Use default values if parsing fails
+            // Use default values (0) if parsing fails, allowing the method to continue
         }
 
-        // Restore commas in description
+        // Restore commas in locationDescription by replacing ";;" with ","
         String locationDescription = parts[5].replace(";;", ",");
 
-        // Parse active status
+        // Parse active status from the 7th field as a boolean
         boolean active = Boolean.parseBoolean(parts[6]);
 
         return new Table(
-                parts[0],                  // id
-                parts[1],                  // tableNumber
-                parts[2],                  // tableType
-                capacity,                  // capacity
-                floor,                     // floor
-                locationDescription,       // locationDescription
-                active                     // active
+                parts[0],                  // id: Unique identifier (e.g., UUID)
+                parts[1],                  // tableNumber: Table identifier (e.g., "Table 1")
+                parts[2],                  // tableType: Type of table (e.g., "family")
+                capacity,                  // capacity: Maximum seating capacity
+                floor,                     // floor: Floor number where the table is located
+                locationDescription,       // locationDescription: Description of table location
+                active                     // active: Availability status (true/false)
         );
     }
 
+    /**
+     * Returns a string representation of the Table object.
+     * Includes all fields in a readable format, useful for debugging or logging.
+     * Format: Table{id='...', tableNumber='...', tableType='...', capacity=..., floor=..., active=...}
+     */
     @Override
     public String toString() {
         return "Table{" +
-                "id='" + id + '\'' +
-                ", tableNumber='" + tableNumber + '\'' +
-                ", tableType='" + tableType + '\'' +
-                ", capacity=" + capacity +
-                ", floor=" + floor +
-                ", active=" + active +
+                "id='" + id + '\'' + // Unique identifier (e.g., UUID), enclosed in single quotes
+                ", tableNumber='" + tableNumber + '\'' + // Table number, enclosed in single quotes
+                ", tableType='" + tableType + '\'' + // Table type, enclosed in single quotes
+                ", capacity=" + capacity + // Seating capacity
+                ", floor=" + floor + // Floor number
+                ", active=" + active + // Active status (true/false)
                 '}';
     }
 }

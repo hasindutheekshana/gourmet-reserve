@@ -32,6 +32,9 @@ public class UserServlet extends HttpServlet {
         }
 
         switch (pathInfo) {
+            case "/logout":
+                logout(request, response);
+                break;
             default:
                 response.sendRedirect(request.getContextPath() + "/user/login.jsp");
                 break;
@@ -142,5 +145,13 @@ public class UserServlet extends HttpServlet {
             request.setAttribute("errorMessage", "An error occurred during login: " + e.getMessage());
             request.getRequestDispatcher("/login.jsp").forward(request, response);
         }
+    }
+
+    private void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
     }
 }

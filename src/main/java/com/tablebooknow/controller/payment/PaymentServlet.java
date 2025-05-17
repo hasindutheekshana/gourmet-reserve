@@ -2,11 +2,6 @@ package com.tablebooknow.controller.payment;
 
 
 import com.tablebooknow.dao.PaymentDAO;
-import com.tablebooknow.dao.ReservationDAO;
-import com.tablebooknow.dao.UserDAO;
-import com.tablebooknow.model.reservation.Reservation;
-import com.tablebooknow.service.PaymentGateway;
-import com.tablebooknow.util.ReservationQueue;
 import java.util.Enumeration;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -21,19 +16,13 @@ import java.io.IOException;
 @WebServlet("/payment/*")
 public class PaymentServlet extends HttpServlet {
     private PaymentDAO paymentDAO;
-    private ReservationDAO reservationDAO;
-    private UserDAO userDAO;
-    private PaymentGateway paymentGateway;
-    private ReservationQueue reservationQueue;
+
 
     @Override
     public void init() throws ServletException {
         System.out.println("Initializing PaymentServlet");
         paymentDAO = new PaymentDAO();
-        reservationDAO = new ReservationDAO();
-        userDAO = new UserDAO();
-        paymentGateway = new PaymentGateway();
-        reservationQueue = new ReservationQueue();
+
     }
 
     @Override
@@ -56,15 +45,6 @@ public class PaymentServlet extends HttpServlet {
         switch (pathInfo) {
             case "/initiate":
                 initiatePayment(request, response);
-                break;
-            case "/success":
-                handlePaymentSuccess(request, response);
-                break;
-            case "/cancel":
-                handlePaymentCancel(request, response);
-                break;
-            case "/notify":
-                handlePaymentNotification(request, response);
                 break;
             default:
                 System.out.println("Unknown path: " + pathInfo);
@@ -95,18 +75,7 @@ public class PaymentServlet extends HttpServlet {
             return;
         }
 
-        if (pathInfo == null || pathInfo.equals("/")) {
-            processPaymentForm(request, response);
-            return;
-        }
-
         switch (pathInfo) {
-            case "/process":
-                processPaymentForm(request, response);
-                break;
-            case "/notify":
-                handlePaymentNotification(request, response);
-                break;
             default:
                 System.out.println("Unknown path: " + pathInfo);
                 response.sendRedirect(request.getContextPath() + "/paymentcard/dashboard");

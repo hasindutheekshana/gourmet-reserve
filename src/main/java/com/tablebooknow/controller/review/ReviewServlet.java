@@ -59,7 +59,6 @@ public class ReviewServlet extends HttpServlet {
             List<Review> userReviews = reviewDAO.findByUserId(userId);
             request.setAttribute("reviews", userReviews);
 
-            // Get completed reservations that don't have reviews yet
             List<Reservation> userReservations = reservationDAO.findByUserId(userId);
 
             List<Reservation> completedReservationsWithoutReviews = userReservations.stream()

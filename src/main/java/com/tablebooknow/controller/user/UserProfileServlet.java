@@ -47,4 +47,84 @@ public class UserProfileServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login.jsp");
         }
     }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Check if user is logged in
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("userId") == null) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+
+        String userId = (String) session.getAttribute("userId");
+        String action = request.getParameter("action");
+
+        if ("update-profile".equals(action)) {
+            updateUserProfile(request, response, userId);
+        } else {
+            response.sendRedirect(request.getContextPath() + "/user/profile");
+        }
+    }
+
+    private void updateUserProfile(HttpServletRequest request, HttpServletResponse response, String userId) throws ServletException, IOException {
+        try {
+            // Get current user data
+            User user = userDAO.findById(userId);
+            if (user == null) {
+                request.setAttribute("errorMessage", "User not found");
+                request.getRequestDispatcher("/user-profile.jsp").forward(request, response);
+                return;
+            }
+
+            String email = request.getParameter("email");
+            String phone = request.getParameter("phone");
+            String currentPassword = request.getParameter("currentPassword");
+            String newPassword = request.getParameter("newPassword");
+            String confirmPassword = request.getParameter("confirmPassword");
+
+            if (email != null && !email.trim().isEmpty()) {
+                user.setEmail(email);
+            }
+
+            if (phone != null && !phone.trim().isEmpty()) {
+                user.setPhone(phone);
+            }
+
+            if (currentPassword != null && !currentPassword.isEmpty() &&
+                    newPassword != null && !newPassword.isEmpty() &&
+                    confirmPassword != null && !confirmPassword.isEmpty()) {
+
+                if (!com.tablebooknow.util.PasswordHasher.checkPassword(currentPassword, user.getPassword())) {
+                    request.setAttribute("errorMessage", "Current password is incorrect");
+                    request.setAttribute("user", user);
+                    request.getRequestDispatcher("/user-profile.jsp").forward(request, response);
+                    return;
+                }
+
+                if (!newPassword.equals(confirmPassword)) {
+                    request.setAttribute("errorMessage", "New passwords do not match");
+                    request.setAttribute("user", user);
+                    request.getRequestDispatcher("/user-profile.jsp").forward(request, response);
+                    return;
+                }
+
+                user.setPassword(com.tablebooknow.util.PasswordHasher.hashPassword(newPassword));
+            }
+
+            boolean updated = userDAO.update(user);
+            if (updated) {
+                request.setAttribute("successMessage", "Profile updated successfully");
+            } else {
+                request.setAttribute("errorMessage", "Failed to update profile");
+            }
+
+            request.setAttribute("user", user);
+            request.getRequestDispatcher("/user-profile.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.err.println("Error updating user profile: " + e.getMessage());
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "An error occurred: " + e.getMessage());
+            request.getRequestDispatcher("/user-profile.jsp").forward(request, response);
+        }
+    }
 }

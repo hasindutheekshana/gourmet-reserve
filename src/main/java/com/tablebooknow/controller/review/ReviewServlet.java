@@ -20,6 +20,7 @@ public class ReviewServlet extends HttpServlet {
     private static final Logger logger = Logger.getLogger(ReviewServlet.class.getName());
 
     private ReviewDAO reviewDAO;
+    private ReservationDAO reservationDAO;
 
     @Override
     public void init() throws ServletException {

@@ -24,6 +24,30 @@ public class AdminReviewServlet extends HttpServlet {
     }
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("adminId") == null) {
+            response.sendRedirect(request.getContextPath() + "/admin/login");
+            return;
+        }
+
+        String pathInfo = request.getPathInfo();
+        if (pathInfo == null) {
+            pathInfo = "/";
+        }
+
+        switch (pathInfo) {
+            case "/":
+            case "/list":
+                request.getRequestDispatcher("/admin-reviews.jsp").forward(request, response);
+                break;
+            default:
+                response.sendRedirect(request.getContextPath() + "/admin/reviews");
+                break;
+        }
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("adminId") == null) {

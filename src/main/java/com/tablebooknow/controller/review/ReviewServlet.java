@@ -3,6 +3,8 @@ package com.tablebooknow.controller.review;
 import com.tablebooknow.dao.ReviewDAO;
 import com.tablebooknow.model.review.Review;
 import com.tablebooknow.model.reservation.Reservation;
+import com.tablebooknow.dao.ReservationDAO;
+import com.tablebooknow.dao.UserDAO;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;

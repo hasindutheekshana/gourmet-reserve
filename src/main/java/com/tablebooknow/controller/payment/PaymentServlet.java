@@ -73,6 +73,9 @@ public class PaymentServlet extends HttpServlet {
             case "/cancel":
                 handlePaymentCancel(request, response);
                 break;
+            case "/notify":
+                handlePaymentNotification(request, response);
+                break;
             default:
                 System.out.println("Unknown path: " + pathInfo);
                 response.sendRedirect(request.getContextPath() + "/paymentcard/dashboard");

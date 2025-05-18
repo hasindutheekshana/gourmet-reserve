@@ -60,7 +60,7 @@ public class PaymentGateway {
 
         params.put("order_id", payment.getId());
         params.put("items", "Table Reservation - " + extractTableTypeFromId(reservation.getTableId()));
-        params.put("currency", CURRENCY); // Use USD as currency
+        params.put("currency", CURRENCY);
         params.put("amount", formattedAmount);
 
         String firstName = user.getUsername();
@@ -96,7 +96,7 @@ public class PaymentGateway {
                         String[] expiryParts = card.getExpiryDate().split("/");
                         if (expiryParts.length == 2) {
                             params.put("card_expiry_month", expiryParts[0]);
-                            params.put("card_expiry_year", "20" + expiryParts[1]); // Assuming YY format
+                            params.put("card_expiry_year", "20" + expiryParts[1]);
                         }
                     }
 

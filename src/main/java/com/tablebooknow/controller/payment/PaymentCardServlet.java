@@ -154,4 +154,123 @@ public class PaymentCardServlet extends HttpServlet {
             response.getWriter().write("Error setting default payment card: " + e.getMessage());
         }
     }
+
+    private void addNewCard(HttpServletRequest request, HttpServletResponse response, String userId) throws ServletException, IOException {
+        try {
+            String cardholderName = request.getParameter("cardholderName");
+            String cardNumber = request.getParameter("cardNumber").replace(" ", "");
+            String expiryDate = request.getParameter("expiryDate");
+            String cvv = request.getParameter("cvv");
+            String cardType = request.getParameter("cardType");
+            boolean makeDefault = "true".equals(request.getParameter("makeDefault"));
+
+            if (cardholderName == null || cardNumber == null || expiryDate == null || cvv == null || cardType == null ||
+                    cardholderName.isEmpty() || cardNumber.isEmpty() || expiryDate.isEmpty() || cvv.isEmpty() || cardType.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("All fields are required");
+                return;
+            }
+
+            PaymentCard card = new PaymentCard();
+            card.setUserId(userId);
+            card.setCardholderName(cardholderName);
+            card.setCardNumber(cardNumber);
+            card.setExpiryDate(expiryDate);
+            card.setCvv(cvv);
+            card.setCardType(cardType);
+
+            if (makeDefault) {
+                List<PaymentCard> existingCards = paymentCardDAO.findByUserId(userId);
+                for (PaymentCard existingCard : existingCards) {
+                    if (existingCard.isDefaultCard()) {
+                        existingCard.setDefaultCard(false);
+                        paymentCardDAO.update(existingCard);
+                    }
+                }
+                card.setDefaultCard(true);
+            } else {
+                if (paymentCardDAO.findByUserId(userId).isEmpty()) {
+                    card.setDefaultCard(true);
+                } else {
+                    card.setDefaultCard(false);
+                }
+            }
+
+            paymentCardDAO.create(card);
+
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("Card added successfully");
+
+        } catch (Exception e) {
+            System.err.println("Error adding payment card: " + e.getMessage());
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Error adding payment card: " + e.getMessage());
+        }
+    }
+
+    private void updateCard(HttpServletRequest request, HttpServletResponse response, String userId) throws ServletException, IOException {
+        try {
+            String cardId = request.getParameter("cardId");
+            String cardholderName = request.getParameter("cardholderName");
+            String expiryDate = request.getParameter("expiryDate");
+            String cvv = request.getParameter("cvv");
+            String cardType = request.getParameter("cardType");
+            String cardNumber = request.getParameter("cardNumber");
+            boolean makeDefault = "true".equals(request.getParameter("makeDefault"));
+
+            System.out.println("Updating card ID: " + cardId);
+            System.out.println("Make default: " + makeDefault);
+
+            PaymentCard card = paymentCardDAO.findById(cardId);
+
+            if (card == null || !card.getUserId().equals(userId)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("Card not found or access denied");
+                return;
+            }
+
+            if (cardholderName != null && !cardholderName.isEmpty()) {
+                card.setCardholderName(cardholderName);
+            }
+
+            if (expiryDate != null && !expiryDate.isEmpty()) {
+                card.setExpiryDate(expiryDate);
+            }
+
+            if (cvv != null && !cvv.isEmpty()) {
+                card.setCvv(cvv);
+            }
+
+            if (cardType != null && !cardType.isEmpty()) {
+                card.setCardType(cardType);
+            }
+
+            if (cardNumber != null && !cardNumber.isEmpty()) {
+                card.setCardNumber(cardNumber.replace(" ", ""));
+            }
+
+            if (makeDefault && !card.isDefaultCard()) {
+                List<PaymentCard> existingCards = paymentCardDAO.findByUserId(userId);
+                for (PaymentCard existingCard : existingCards) {
+                    if (existingCard.isDefaultCard() && !existingCard.getId().equals(card.getId())) {
+                        existingCard.setDefaultCard(false);
+                        paymentCardDAO.update(existingCard);
+                    }
+                }
+                card.setDefaultCard(true);
+            }
+
+            paymentCardDAO.update(card);
+
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("Card updated successfully");
+
+        } catch (Exception e) {
+            System.err.println("Error updating payment card: " + e.getMessage());
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Error updating payment card: " + e.getMessage());
+        }
+    }
 }

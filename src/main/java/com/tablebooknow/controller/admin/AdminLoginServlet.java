@@ -31,7 +31,51 @@ public class AdminLoginServlet extends HttpServlet {
         if ("/admin/logout".equals(servletPath)) {
             logout(request, response);
         } else {
-            // Show login page
+            request.getRequestDispatcher("/adminLogin.jsp").forward(request, response);
+        }
+    }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        if (username == null || password == null || username.trim().isEmpty() || password.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "Username and password are required");
+            request.getRequestDispatcher("/adminLogin.jsp").forward(request, response);
+            return;
+        }
+
+        try {
+            Admin admin = adminDAO.findByUsername(username);
+
+            if (admin != null && PasswordHasher.checkPassword(password, admin.getPassword())) {
+                HttpSession session = request.getSession();
+                session.setAttribute("adminId", admin.getId());
+                session.setAttribute("adminUsername", admin.getUsername());
+                session.setAttribute("isAdmin", true);
+                session.setAttribute("adminRole", admin.getRole());
+
+                session.setAttribute("adminMenu", AdminDashboardConfig.getAdminMenu());
+
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            } else {
+                User user = userDAO.findByUsername(username);
+
+                if (user != null && user.isAdmin() && PasswordHasher.checkPassword(password, user.getPassword())) {
+                    HttpSession session = request.getSession();
+                    session.setAttribute("adminId", user.getId());
+                    session.setAttribute("adminUsername", user.getUsername());
+                    session.setAttribute("isAdmin", true);
+                    session.setAttribute("adminRole", "admin"); // Default role for user-admins
+
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                } else {
+                    request.setAttribute("errorMessage", "Invalid username or password");
+                    request.getRequestDispatcher("/adminLogin.jsp").forward(request, response);
+                }
+            }
+        } catch (Exception e) {
+            request.setAttribute("errorMessage", "An error occurred during login: " + e.getMessage());
             request.getRequestDispatcher("/adminLogin.jsp").forward(request, response);
         }
     }

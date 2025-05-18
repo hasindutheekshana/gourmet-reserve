@@ -47,6 +47,9 @@ public class ReviewServlet extends HttpServlet {
             case "/list":
                 showUserReviews(request, response, userId);
                 break;
+            case "/add":
+                showAddReviewForm(request, response, userId);
+                break;
             default:
                 response.sendRedirect(request.getContextPath() + "/reviews/list");
                 break;
@@ -79,6 +82,54 @@ public class ReviewServlet extends HttpServlet {
             logger.severe("Error showing user reviews: " + e.getMessage());
             request.setAttribute("errorMessage", "Error retrieving reviews: " + e.getMessage());
             request.getRequestDispatcher("/user-reviews.jsp").forward(request, response);
+        }
+    }
+
+    private void showAddReviewForm(HttpServletRequest request, HttpServletResponse response, String userId)
+            throws ServletException, IOException {
+        String reservationId = request.getParameter("reservationId");
+
+        if (reservationId == null || reservationId.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "Reservation ID is required");
+            response.sendRedirect(request.getContextPath() + "/reviews/list");
+            return;
+        }
+
+        try {
+            Reservation reservation = reservationDAO.findById(reservationId);
+
+            if (reservation == null) {
+                request.setAttribute("errorMessage", "Reservation not found");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+            if (!reservation.getUserId().equals(userId)) {
+                request.setAttribute("errorMessage", "You can only review your own reservations");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+
+            if (!("completed".equals(reservation.getStatus()) || "confirmed".equals(reservation.getStatus()))) {
+                request.setAttribute("errorMessage", "You can only review completed reservations");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+            if (reviewDAO.hasReview(reservationId, userId)) {
+                request.setAttribute("errorMessage", "You have already reviewed this reservation");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+            request.setAttribute("reservation", reservation);
+            request.getRequestDispatcher("/review-form.jsp").forward(request, response);
+
+        } catch (Exception e) {
+            logger.severe("Error showing add review form: " + e.getMessage());
+            request.setAttribute("errorMessage", "Error preparing review form: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/reviews/list");
         }
     }
 

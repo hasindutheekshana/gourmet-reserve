@@ -85,6 +85,9 @@ public class ReviewServlet extends HttpServlet {
             case "update":
                 updateReview(request, response, userId);
                 break;
+            case "delete":
+                deleteReview(request, response, userId);
+                break;
             default:
                 response.sendRedirect(request.getContextPath() + "/reviews/list");
                 break;
@@ -326,6 +329,43 @@ public class ReviewServlet extends HttpServlet {
             logger.severe("Error updating review: " + e.getMessage());
             request.setAttribute("errorMessage", "Error updating review: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/reviews/edit?reviewId=" + reviewId);
+        }
+    }
+
+    private void deleteReview(HttpServletRequest request, HttpServletResponse response, String userId)
+            throws ServletException, IOException {
+        String reviewId = request.getParameter("reviewId");
+
+        if (reviewId == null || reviewId.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "Review ID is required");
+            response.sendRedirect(request.getContextPath() + "/reviews/list");
+            return;
+        }
+
+        try {
+            Review review = reviewDAO.findById(reviewId);
+
+            if (review == null) {
+                request.setAttribute("errorMessage", "Review not found");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+            if (!review.getUserId().equals(userId)) {
+                request.setAttribute("errorMessage", "You can only delete your own reviews");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+            reviewDAO.delete(reviewId);
+
+            request.setAttribute("successMessage", "Your review has been deleted");
+            response.sendRedirect(request.getContextPath() + "/reviews/list");
+
+        } catch (Exception e) {
+            logger.severe("Error deleting review: " + e.getMessage());
+            request.setAttribute("errorMessage", "Error deleting review: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/reviews/list");
         }
     }
 

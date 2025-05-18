@@ -50,6 +50,9 @@ public class ReviewServlet extends HttpServlet {
             case "/add":
                 showAddReviewForm(request, response, userId);
                 break;
+            case "/edit":
+                showEditReviewForm(request, response, userId);
+                break;
             default:
                 response.sendRedirect(request.getContextPath() + "/reviews/list");
                 break;
@@ -129,6 +132,47 @@ public class ReviewServlet extends HttpServlet {
         } catch (Exception e) {
             logger.severe("Error showing add review form: " + e.getMessage());
             request.setAttribute("errorMessage", "Error preparing review form: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/reviews/list");
+        }
+    }
+
+    private void showEditReviewForm(HttpServletRequest request, HttpServletResponse response, String userId)
+            throws ServletException, IOException {
+        String reviewId = request.getParameter("reviewId");
+
+        if (reviewId == null || reviewId.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "Review ID is required");
+            response.sendRedirect(request.getContextPath() + "/reviews/list");
+            return;
+        }
+
+        try {
+            Review review = reviewDAO.findById(reviewId);
+
+            if (review == null) {
+                request.setAttribute("errorMessage", "Review not found");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+
+            if (!review.getUserId().equals(userId)) {
+                request.setAttribute("errorMessage", "You can only edit your own reviews");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+            Reservation reservation = reservationDAO.findById(review.getReservationId());
+
+            request.setAttribute("review", review);
+            request.setAttribute("reservation", reservation);
+            request.setAttribute("editMode", true);
+
+            request.getRequestDispatcher("/review-form.jsp").forward(request, response);
+
+        } catch (Exception e) {
+            logger.severe("Error showing edit review form: " + e.getMessage());
+            request.setAttribute("errorMessage", "Error preparing edit form: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/reviews/list");
         }
     }

@@ -2,9 +2,18 @@ package com.tablebooknow.controller.payment;
 
 
 import com.tablebooknow.dao.PaymentDAO;
+import com.tablebooknow.dao.ReservationDAO;
+import com.tablebooknow.dao.UserDAO;
+import com.tablebooknow.dao.PaymentCardDAO;
+import com.tablebooknow.model.payment.PaymentCard;
 import com.tablebooknow.model.payment.Payment;
-
+import com.tablebooknow.model.reservation.Reservation;
+import com.tablebooknow.model.user.User;
+import com.tablebooknow.service.PaymentGateway;
+import com.tablebooknow.util.ReservationQueue;
 import java.util.Enumeration;
+import com.tablebooknow.util.QRCodeGenerator;
+import com.tablebooknow.service.EmailService;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -12,19 +21,29 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.List;
 
 
 @WebServlet("/payment/*")
 public class PaymentServlet extends HttpServlet {
     private PaymentDAO paymentDAO;
+    private PaymentGateway paymentGateway;
+    private ReservationDAO reservationDAO;
+    private UserDAO userDAO;
+    private ReservationQueue reservationQueue;
 
 
     @Override
     public void init() throws ServletException {
         System.out.println("Initializing PaymentServlet");
         paymentDAO = new PaymentDAO();
-
+        reservationDAO = new ReservationDAO();
+        userDAO = new UserDAO();
+        paymentGateway = new PaymentGateway();
+        reservationQueue = new ReservationQueue();
     }
 
     @Override
@@ -47,6 +66,12 @@ public class PaymentServlet extends HttpServlet {
         switch (pathInfo) {
             case "/initiate":
                 initiatePayment(request, response);
+                break;
+            case "/success":
+                handlePaymentSuccess(request, response);
+                break;
+            case "/cancel":
+                handlePaymentCancel(request, response);
                 break;
             default:
                 System.out.println("Unknown path: " + pathInfo);
@@ -78,6 +103,12 @@ public class PaymentServlet extends HttpServlet {
         }
 
         switch (pathInfo) {
+            case "/process":
+                processPaymentForm(request, response);
+                break;
+            case "/notify":
+                handlePaymentNotification(request, response);
+                break;
             default:
                 System.out.println("Unknown path: " + pathInfo);
                 response.sendRedirect(request.getContextPath() + "/paymentcard/dashboard");
@@ -352,6 +383,184 @@ public class PaymentServlet extends HttpServlet {
             request.setAttribute("errorMessage", "We couldn't verify your payment. Please contact support.");
             request.setAttribute("paymentSuccessful", false);
             request.getRequestDispatcher("/paymentSuccess.jsp").forward(request, response);
+        }
+    }
+
+    private void handlePaymentCancel(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        System.out.println("Payment cancel callback received");
+
+        HttpSession session = request.getSession();
+        String paymentId = (String) session.getAttribute("paymentId");
+
+        try {
+            if (paymentId != null) {
+                Payment payment = paymentDAO.findById(paymentId);
+                if (payment != null) {
+                    payment.setStatus("CANCELLED");
+                    paymentDAO.update(payment);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error processing payment cancellation: " + e.getMessage());
+        }
+
+        request.setAttribute("errorMessage", "Payment was cancelled. Please try again.");
+        request.getRequestDispatcher("/paymentcard/dashboard").forward(request, response);
+    }
+
+    private void handlePaymentNotification(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        System.out.println("Payment notification received");
+
+        String merchantId = request.getParameter("merchant_id");
+        String orderId = request.getParameter("order_id");
+        String paymentId = request.getParameter("payment_id");
+        String payhere_amount = request.getParameter("payhere_amount");
+        String payhere_currency = request.getParameter("payhere_currency");
+        String status_code = request.getParameter("status_code");
+        String md5sig = request.getParameter("md5sig");
+
+        System.out.println("Notification details - Order: " + orderId + ", Status: " + status_code);
+
+        System.out.println("All notification parameters:");
+        request.getParameterMap().forEach((key, values) -> {
+            for (String value : values) {
+                System.out.println("  " + key + ": " + value);
+            }
+        });
+
+        boolean isValid = paymentGateway.validateNotification(
+                merchantId, orderId, paymentId, payhere_amount, payhere_currency, status_code
+        );
+
+        if (isValid && "2".equals(status_code)) {
+            try {
+                Payment payment = paymentDAO.findById(orderId);
+                if (payment != null) {
+                    payment.setStatus("COMPLETED");
+                    payment.setTransactionId(paymentId);
+                    payment.setCompletedAt(LocalDateTime.now());
+
+                    paymentDAO.update(payment);
+
+                    Reservation reservation = reservationDAO.findById(payment.getReservationId());
+                    if (reservation != null) {
+                        reservation.setStatus("confirmed");
+                        reservationDAO.update(reservation);
+
+                        reservationQueue.enqueue(reservation);
+                    }
+
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.getWriter().write("Payment processed successfully");
+                    return;
+                }
+            } catch (Exception e) {
+                System.err.println("Error processing payment notification: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        response.getWriter().write("Invalid payment notification");
+    }
+
+    private void processPaymentForm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        System.out.println("Processing payment form");
+
+        HttpSession session = request.getSession();
+        String userId = (String) session.getAttribute("userId");
+
+        String paymentCardId = (String) session.getAttribute("paymentCardId");
+
+        String reservationId = (String) session.getAttribute("reservationId");
+        if (reservationId == null) {
+            reservationId = request.getParameter("reservationId");
+        }
+
+        if (reservationId == null) {
+            System.out.println("No reservation ID found, redirecting to date selection");
+            response.sendRedirect(request.getContextPath() + "/reservation/dateSelection");
+            return;
+        }
+
+        try {
+            Reservation reservation = reservationDAO.findById(reservationId);
+            if (reservation == null) {
+                request.setAttribute("errorMessage", "Reservation not found");
+                request.getRequestDispatcher("/paymentcard/dashboard").forward(request, response);
+                return;
+            }
+
+            User user = userDAO.findById(userId);
+            if (user == null) {
+                request.setAttribute("errorMessage", "User not found");
+                request.getRequestDispatcher("/paymentcard/dashboard").forward(request, response);
+                return;
+            }
+
+            String tableId = reservation.getTableId();
+            String tableType = "regular";
+            if (tableId != null && !tableId.isEmpty()) {
+                char typeChar = tableId.charAt(0);
+                if (typeChar == 'f') tableType = "family";
+                else if (typeChar == 'l') tableType = "luxury";
+                else if (typeChar == 'c') tableType = "couple";
+                else if (typeChar == 'r') tableType = "regular";
+            }
+
+            int duration = reservation.getDuration();
+            BigDecimal amount = paymentGateway.calculateAmount(tableType, duration);
+
+            Payment payment = new Payment();
+            payment.setUserId(userId);
+            payment.setReservationId(reservationId);
+            payment.setAmount(amount);
+            payment.setCurrency("USD");
+            payment.setStatus("PENDING");
+            payment.setPaymentGateway("PayHere");
+
+            if (paymentCardId != null) {
+                try {
+                    PaymentCardDAO paymentCardDAO = new PaymentCardDAO();
+                    PaymentCard card = paymentCardDAO.findById(paymentCardId);
+                    if (card != null) {
+                        payment.setPaymentMethod("Card - " + card.getCardType().toUpperCase());
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error getting payment card details: " + e.getMessage());
+                }
+            }
+
+            paymentDAO.create(payment);
+
+            session.setAttribute("paymentId", payment.getId());
+
+            String baseUrl = request.getRequestURL().toString();
+            baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf("/payment/"));
+
+            String returnUrl = baseUrl + "/payment/success";
+            String cancelUrl = baseUrl + "/payment/cancel";
+            String notifyUrl = baseUrl + "/payment/notify";
+
+            Map<String, String> params = paymentGateway.generateFormParameters(
+                    payment, reservation, user, returnUrl, cancelUrl, notifyUrl, paymentCardId
+            );
+
+            request.setAttribute("paymentParams", params);
+            request.setAttribute("checkoutUrl", paymentGateway.getCheckoutUrl());
+
+            String simulateParam = request.getParameter("simulatePayment");
+            if (simulateParam != null) {
+                request.setAttribute("simulatePayment", simulateParam);
+            }
+
+            request.getRequestDispatcher("/paymentProcess.jsp").forward(request, response);
+
+        } catch (Exception e) {
+            System.err.println("Error processing payment: " + e.getMessage());
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "Error processing payment: " + e.getMessage());
+            request.getRequestDispatcher("/paymentcard/dashboard").forward(request, response);
         }
     }
 

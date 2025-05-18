@@ -114,6 +114,59 @@ public class PaymentCardServlet extends HttpServlet {
 
     }
 
+    private void deleteCard(HttpServletRequest request, HttpServletResponse response, String userId) throws ServletException, IOException {
+        try {
+            String cardId = request.getParameter("cardId");
+            System.out.println("Processing delete for card ID: " + cardId);
+
+            if (cardId == null || cardId.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("Card ID is required");
+                return;
+            }
+
+            PaymentCard card = paymentCardDAO.findById(cardId);
+            System.out.println("Found card: " + (card != null ? card.getId() : "null"));
+
+            if (card == null || !card.getUserId().equals(userId)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("Card not found or access denied");
+                return;
+            }
+
+            boolean wasDefault = card.isDefaultCard();
+            System.out.println("Was default card: " + wasDefault);
+
+            boolean deleted = paymentCardDAO.delete(cardId);
+            System.out.println("Card deleted: " + deleted);
+
+            if (!deleted) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("Failed to delete card");
+                return;
+            }
+
+            if (wasDefault) {
+                List<PaymentCard> remainingCards = paymentCardDAO.findByUserId(userId);
+                if (!remainingCards.isEmpty()) {
+                    PaymentCard newDefault = remainingCards.get(0);
+                    newDefault.setDefaultCard(true);
+                    paymentCardDAO.update(newDefault);
+                    System.out.println("Set new default card: " + newDefault.getId());
+                }
+            }
+
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("Card deleted successfully");
+
+        } catch (Exception e) {
+            System.err.println("Error deleting payment card: " + e.getMessage());
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Error deleting payment card: " + e.getMessage());
+        }
+    }
+
     private void setDefaultCard(HttpServletRequest request, HttpServletResponse response, String userId) throws ServletException, IOException {
         try {
             String cardId = request.getParameter("cardId");
@@ -271,6 +324,66 @@ public class PaymentCardServlet extends HttpServlet {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Error updating payment card: " + e.getMessage());
+        }
+    }
+
+    private void processPaymentWithCard(HttpServletRequest request, HttpServletResponse response, String userId) throws ServletException, IOException {
+        try {
+            String cardId = request.getParameter("cardId");
+            String reservationId = request.getParameter("reservationId");
+
+            if (reservationId == null) {
+                reservationId = (String) request.getSession().getAttribute("reservationId");
+            }
+
+            if (reservationId == null) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("Reservation ID is missing");
+                return;
+            }
+
+            PaymentCard card = null;
+            if (cardId != null && !cardId.isEmpty()) {
+                card = paymentCardDAO.findById(cardId);
+
+                if (card == null || !card.getUserId().equals(userId)) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    response.getWriter().write("Invalid payment method");
+                    return;
+                }
+            } else {
+                List<PaymentCard> cards = paymentCardDAO.findByUserId(userId);
+                for (PaymentCard c : cards) {
+                    if (c.isDefaultCard()) {
+                        card = c;
+                        break;
+                    }
+                }
+
+                if (card == null && !cards.isEmpty()) {
+                    card = cards.get(0);
+                }
+
+                if (card == null) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    response.getWriter().write("No payment method selected or available");
+                    return;
+                }
+            }
+
+            request.getSession().setAttribute("paymentCardId", card.getId());
+
+            request.getSession().setAttribute("cardholderName", card.getCardholderName());
+            request.getSession().setAttribute("cardType", card.getCardType());
+            request.getSession().setAttribute("cardLast4", card.getCardNumber().substring(card.getCardNumber().length() - 4));
+
+            response.sendRedirect(request.getContextPath() + "/payment/process");
+
+        } catch (Exception e) {
+            System.err.println("Error processing payment with card: " + e.getMessage());
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Error processing payment: " + e.getMessage());
         }
     }
 }

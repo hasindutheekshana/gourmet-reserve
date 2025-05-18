@@ -82,6 +82,9 @@ public class ReviewServlet extends HttpServlet {
             case "create":
                 createReview(request, response, userId);
                 break;
+            case "update":
+                updateReview(request, response, userId);
+                break;
             default:
                 response.sendRedirect(request.getContextPath() + "/reviews/list");
                 break;
@@ -268,6 +271,61 @@ public class ReviewServlet extends HttpServlet {
             logger.severe("Error creating review: " + e.getMessage());
             request.setAttribute("errorMessage", "Error creating review: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/reviews/add?reservationId=" + reservationId);
+        }
+    }
+
+    private void updateReview(HttpServletRequest request, HttpServletResponse response, String userId)
+            throws ServletException, IOException {
+        String reviewId = request.getParameter("reviewId");
+        String ratingStr = request.getParameter("rating");
+        String title = request.getParameter("title");
+        String comment = request.getParameter("comment");
+
+        if (reviewId == null || ratingStr == null || title == null || comment == null) {
+            request.setAttribute("errorMessage", "All fields are required");
+            response.sendRedirect(request.getContextPath() + "/reviews/edit?reviewId=" + reviewId);
+            return;
+        }
+
+        try {
+            Review review = reviewDAO.findById(reviewId);
+
+            if (review == null) {
+                request.setAttribute("errorMessage", "Review not found");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+            if (!review.getUserId().equals(userId)) {
+                request.setAttribute("errorMessage", "You can only edit your own reviews");
+                response.sendRedirect(request.getContextPath() + "/reviews/list");
+                return;
+            }
+
+
+            int rating = 5;
+            try {
+                rating = Integer.parseInt(ratingStr);
+                if (rating < 1) rating = 1;
+                if (rating > 5) rating = 5;
+            } catch (NumberFormatException e) {
+
+            }
+
+            review.setRating(rating);
+            review.setTitle(title);
+            review.setComment(comment);
+            review.setUpdatedAt(LocalDateTime.now());
+
+            reviewDAO.update(review);
+
+            request.setAttribute("successMessage", "Your review has been updated");
+            response.sendRedirect(request.getContextPath() + "/reviews/list");
+
+        } catch (Exception e) {
+            logger.severe("Error updating review: " + e.getMessage());
+            request.setAttribute("errorMessage", "Error updating review: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/reviews/edit?reviewId=" + reviewId);
         }
     }
 

@@ -75,6 +75,19 @@ public class AdminUserServlet extends HttpServlet {
 
         switch (pathInfo) {
 
+            case "/create":
+                createUser(request, response);
+                break;
+            case "/update":
+                updateUser(request, response);
+                break;
+            case "/updateAdmin":
+                toggleAdminStatus(request, response);
+                break;
+            case "/delete":
+                deleteUser(request, response);
+                break;
+
             default:
                 response.sendRedirect(request.getContextPath() + "/admin/users");
                 break;
@@ -200,6 +213,222 @@ public class AdminUserServlet extends HttpServlet {
     private void showAddForm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setAttribute("editMode", false);
         request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+    }
+
+    private void createUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            String username = request.getParameter("username");
+            String password = request.getParameter("password");
+            String email = request.getParameter("email");
+            String phone = request.getParameter("phone");
+            String isAdminStr = request.getParameter("isAdmin");
+
+            if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+                request.setAttribute("errorMessage", "Username and password are required");
+                request.setAttribute("editMode", false);
+                request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+                return;
+            }
+
+            User existingUser = userDAO.findByUsername(username);
+            if (existingUser != null) {
+                request.setAttribute("errorMessage", "Username already exists");
+                request.setAttribute("editMode", false);
+                request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+                return;
+            }
+
+            if (email != null && !email.trim().isEmpty()) {
+                User userWithEmail = userDAO.findByEmail(email);
+                if (userWithEmail != null) {
+                    request.setAttribute("errorMessage", "Email already in use");
+                    request.setAttribute("editMode", false);
+                    request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+                    return;
+                }
+            }
+
+            User newUser = new User();
+            newUser.setUsername(username);
+            newUser.setPassword(PasswordHasher.hashPassword(password));
+            newUser.setEmail(email);
+            newUser.setPhone(phone);
+            newUser.setAdmin("on".equals(isAdminStr) || "true".equals(isAdminStr));
+
+            User createdUser = userDAO.create(newUser);
+
+            if (createdUser != null && createdUser.getId() != null) {
+                request.setAttribute("successMessage", "User created successfully");
+                response.sendRedirect(request.getContextPath() + "/admin/users/view?id=" + createdUser.getId());
+            } else {
+                request.setAttribute("errorMessage", "Failed to create user");
+                request.setAttribute("editMode", false);
+                request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+            }
+        } catch (Exception e) {
+            request.setAttribute("errorMessage", "Error creating user: " + e.getMessage());
+            request.setAttribute("editMode", false);
+            request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+        }
+    }
+
+    private void updateUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String userId = request.getParameter("userId");
+        if (userId == null || userId.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/admin/users");
+            return;
+        }
+
+        try {
+            User user = userDAO.findById(userId);
+            if (user == null) {
+                request.setAttribute("errorMessage", "User not found");
+                response.sendRedirect(request.getContextPath() + "/admin/users");
+                return;
+            }
+
+            String username = request.getParameter("username");
+            String password = request.getParameter("password");
+            String email = request.getParameter("email");
+            String phone = request.getParameter("phone");
+            String isAdminStr = request.getParameter("isAdmin");
+
+            if (username == null || username.trim().isEmpty()) {
+                request.setAttribute("errorMessage", "Username is required");
+                request.setAttribute("user", user);
+                request.setAttribute("editMode", true);
+                request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+                return;
+            }
+
+            if (!username.equals(user.getUsername())) {
+                User existingUser = userDAO.findByUsername(username);
+                if (existingUser != null) {
+                    request.setAttribute("errorMessage", "Username already exists");
+                    request.setAttribute("user", user);
+                    request.setAttribute("editMode", true);
+                    request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+                    return;
+                }
+            }
+
+            if (email != null && !email.trim().isEmpty() && !email.equals(user.getEmail())) {
+                User userWithEmail = userDAO.findByEmail(email);
+                if (userWithEmail != null && !userWithEmail.getId().equals(userId)) {
+                    request.setAttribute("errorMessage", "Email already in use");
+                    request.setAttribute("user", user);
+                    request.setAttribute("editMode", true);
+                    request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+                    return;
+                }
+            }
+
+            user.setUsername(username);
+
+            if (password != null && !password.trim().isEmpty()) {
+                user.setPassword(PasswordHasher.hashPassword(password));
+            }
+
+            user.setEmail(email);
+            user.setPhone(phone);
+            user.setAdmin("on".equals(isAdminStr) || "true".equals(isAdminStr));
+
+            boolean success = userDAO.update(user);
+
+            if (success) {
+                request.setAttribute("successMessage", "User updated successfully");
+                response.sendRedirect(request.getContextPath() + "/admin/users/view?id=" + userId);
+            } else {
+                request.setAttribute("errorMessage", "Failed to update user");
+                request.setAttribute("user", user);
+                request.setAttribute("editMode", true);
+                request.getRequestDispatcher("/admin-user-form.jsp").forward(request, response);
+            }
+        } catch (Exception e) {
+            request.setAttribute("errorMessage", "Error updating user: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/admin/users");
+        }
+    }
+
+    private void toggleAdminStatus(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String userId = request.getParameter("userId");
+        String isAdminStr = request.getParameter("isAdmin");
+
+        if (userId == null || userId.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/admin/users");
+            return;
+        }
+
+        try {
+            User user = userDAO.findById(userId);
+            if (user == null) {
+                request.setAttribute("errorMessage", "User not found");
+                response.sendRedirect(request.getContextPath() + "/admin/users");
+                return;
+            }
+
+            boolean isAdmin = "on".equals(isAdminStr) || "true".equals(isAdminStr);
+            user.setAdmin(isAdmin);
+
+            boolean success = userDAO.update(user);
+
+            if (success) {
+                request.setAttribute("successMessage",
+                        isAdmin ? "User is now an administrator" : "Administrator privileges revoked");
+            } else {
+                request.setAttribute("errorMessage", "Failed to update user admin status");
+            }
+
+            response.sendRedirect(request.getContextPath() + "/admin/users");
+        } catch (Exception e) {
+            request.setAttribute("errorMessage", "Error updating user admin status: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/admin/users");
+        }
+    }
+
+    private void deleteUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String userId = request.getParameter("userId");
+        if (userId == null || userId.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/admin/users");
+            return;
+        }
+
+        try {
+            System.out.println("Attempting to delete user with ID: " + userId);
+
+            List<Reservation> userReservations = reservationDAO.findByUserId(userId);
+
+            System.out.println("User has " + (userReservations != null ? userReservations.size() : 0) + " reservations");
+
+            if (userReservations != null && !userReservations.isEmpty()) {
+                // Debug log
+                System.out.println("Cannot delete - user has active reservations");
+
+                request.setAttribute("errorMessage",
+                        "Cannot delete user with active reservations. Please cancel or delete all user reservations first.");
+                response.sendRedirect(request.getContextPath() + "/admin/users/view?id=" + userId);
+                return;
+            }
+
+            System.out.println("Proceeding with user deletion");
+
+            boolean success = userDAO.delete(userId);
+
+            System.out.println("User deletion result: " + success);
+
+            if (success) {
+                request.setAttribute("successMessage", "User deleted successfully");
+                response.sendRedirect(request.getContextPath() + "/admin/users");
+            } else {
+                request.setAttribute("errorMessage", "Failed to delete user");
+                response.sendRedirect(request.getContextPath() + "/admin/users/view?id=" + userId);
+            }
+        } catch (Exception e) {
+            System.err.println("Error deleting user: " + e.getMessage());
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "Error deleting user: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/admin/users");
+        }
     }
 
 }

@@ -1,0 +1,189 @@
+:root {
+    --gold: #D4AF37;
+    --burgundy: #800020;
+    --dark: #1a1a1a;
+    --text: #e0e0e0;
+    --glass: rgba(255, 255, 255, 0.05);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--dark);
+    font-family: 'Roboto', sans-serif;
+    background-image:
+        linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)),
+        url('../img/restaurant-bg.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.datetime-container {
+    background: rgba(26, 26, 26, 0.95);
+    padding: 3rem;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.header h1 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.header p {
+    color: var(--text);
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.datetime-form {
+    display: grid;
+    gap: 2rem;
+}
+
+.input-group {
+    position: relative;
+}
+
+.input-label {
+    display: block;
+    margin-bottom: 1rem;
+    color: var(--gold);
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+.datetime-input {
+    width: 100%;
+    padding: 1.2rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.datetime-input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+}
+
+.datetime-input:hover {
+    transform: translateY(-2px);
+}
+
+/* Custom Calendar Icon */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    padding: 5px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    transform: scale(1.1);
+}
+
+.proceed-btn {
+    width: 100%;
+    padding: 1.2rem;
+    background: linear-gradient(135deg, var(--gold), var(--burgundy));
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    margin-top: 1rem;
+}
+
+.proceed-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+}
+
+.error-message {
+    color: #ff4444;
+    margin-top: 1rem;
+    text-align: center;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+/* Booking Type Styles */
+.booking-type-container {
+    margin-bottom: 0;
+}
+
+.booking-type-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.booking-option {
+    display: flex;
+    align-items: center;
+    color: var(--text);
+}
+
+.booking-option input[type="radio"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--gold);
+}
+
+.booking-option label {
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .datetime-container {
+        padding: 2rem;
+    }
+
+    .header h1 {
+        font-size: 2rem;
+    }
+}

@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-
 public class FileHandler {
 
     public static void ensureFileExists(String filePath) throws IOException {
@@ -28,9 +27,4 @@ public class FileHandler {
     public static boolean fileExists(String filePath) {
         return Files.exists(Paths.get(filePath));
     }
-
-
-
-}
-
 

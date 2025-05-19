@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.example</groupId>
-  <artifactId>gourmet-reserve</artifactId>
+  <artifactId>HotelTableReservation</artifactId>
   <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>gourmet-reserve Maven Webapp</name>
+  <name>HotelTableReservation Maven Webapp</name>
   <url>http://maven.apache.org</url>
   <dependencies>
     <dependency>
@@ -80,8 +80,9 @@
       <artifactId>javase</artifactId>
       <version>3.5.1</version>
     </dependency>
+
   </dependencies>
   <build>
-    <finalName>gourmet-reserve</finalName>
+    <finalName>HotelTableReservation</finalName>
   </build>
 </project>

@@ -28,4 +28,3 @@ public class FileHandler {
         return Files.exists(Paths.get(filePath));
     }
 
-}

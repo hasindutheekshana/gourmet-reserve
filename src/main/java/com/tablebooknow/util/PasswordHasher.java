@@ -10,7 +10,6 @@ public class PasswordHasher {
     private static final int SALT_LENGTH = 16;
     private static final String DELIMITER = ":";
 
-
     public static String hashPassword(String password) {
         try {
             SecureRandom random = new SecureRandom();
@@ -21,6 +20,8 @@ public class PasswordHasher {
             md.update(salt);
             byte[] hashedPassword = md.digest(password.getBytes());
 
+            String saltString = Base64.getEncoder().encodeToString(salt);
+            String hashString = Base64.getEncoder().encodeToString(hashedPassword);
             String saltString = Base64.getEncoder().encodeToString(salt);
             String hashString = Base64.getEncoder().encodeToString(hashedPassword);
 
@@ -39,6 +40,11 @@ public class PasswordHasher {
 
             byte[] salt = Base64.getDecoder().decode(parts[0]);
             byte[] hash = Base64.getDecoder().decode(parts[1]);
+
+            byte[] salt = Base64.getDecoder().decode(parts[0]);
+            byte[] hash = Base64.getDecoder().decode(parts[1]);
+
+
 
             MessageDigest md = MessageDigest.getInstance(ALGORITHM);
             md.update(salt);
@@ -59,3 +65,5 @@ public class PasswordHasher {
         }
     }
 }
+
+

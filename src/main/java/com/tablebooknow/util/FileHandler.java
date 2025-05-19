@@ -7,8 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-
 public class FileHandler {
+
 
 
     public static void ensureFileExists(String filePath) throws IOException {
@@ -23,18 +23,15 @@ public class FileHandler {
             System.out.println("Created directory: " + parent.toAbsolutePath());
         }
 
-
         if (!Files.exists(path)) {
             Files.createFile(path);
             System.out.println("Created file: " + path.toAbsolutePath());
         }
     }
 
-
     public static boolean fileExists(String filePath) {
         return Files.exists(Paths.get(filePath));
     }
-
 
     public static void createBackup(String filePath) throws IOException {
         if (!fileExists(filePath)) {

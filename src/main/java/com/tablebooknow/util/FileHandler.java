@@ -1,6 +1,5 @@
 package com.tablebooknow.util;
 
-import java.io.File;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -9,13 +8,10 @@ import java.nio.file.Paths;
 
 public class FileHandler {
 
-
-
     public static void ensureFileExists(String filePath) throws IOException {
         Path path = Paths.get(filePath);
 
         System.out.println("Ensuring file exists at: " + path.toAbsolutePath());
-
 
         Path parent = path.getParent();
         if (parent != null && !Files.exists(parent)) {
@@ -32,6 +28,7 @@ public class FileHandler {
     public static boolean fileExists(String filePath) {
         return Files.exists(Paths.get(filePath));
     }
+}
 
     public static void createBackup(String filePath) throws IOException {
         if (!fileExists(filePath)) {

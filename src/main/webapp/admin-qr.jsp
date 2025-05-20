@@ -11,7 +11,6 @@
 </div>
 
 <script>
-// QR Scanner initialization
 let qrScanner = null;
 
 function initializeScanner() {
@@ -38,7 +37,6 @@ function initializeScanner() {
             if (scanResultElement) scanResultElement.style.display = 'block';
             if (scanDataElement) scanDataElement.textContent = decodedText;
 
-            // Parse QR data (expected format: JSON with reservationId, paymentId, userId)
             try {
                 const reservationData = JSON.parse(decodedText);
 
@@ -52,11 +50,9 @@ function initializeScanner() {
                         '</div>';
                 }
 
-                // Show check-in button
                 if (checkInBtnElement) {
                     checkInBtnElement.style.display = 'inline-block';
 
-                    // Add check-in functionality
                     checkInBtnElement.onclick = function() {
                         if (reservationData.reservationId) {
                             // Send to server to update reservation status
@@ -74,7 +70,6 @@ function initializeScanner() {
                 if (checkInBtnElement) checkInBtnElement.style.display = 'none';
             }
 
-            // Clean up the scanner after successful scan
             if (qrScanner) {
                 qrScanner.clear();
                 qrScanner = null;
@@ -85,7 +80,6 @@ function initializeScanner() {
     }
 }
 
-// Initialize scanner when page loads
 document.addEventListener('DOMContentLoaded', initializeScanner);
 </script>
 

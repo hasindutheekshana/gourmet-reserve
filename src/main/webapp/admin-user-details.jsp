@@ -5,7 +5,6 @@
     List<Reservation> userReservations = (List<Reservation>) request.getAttribute("userReservations");
 
     if (viewUser == null) {
-        // Handle case where user is not found
 %>
     <div class="message error-message">
         User not found. They may have been deleted or the ID is invalid.

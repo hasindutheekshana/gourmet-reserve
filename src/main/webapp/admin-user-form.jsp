@@ -81,7 +81,6 @@
             return false;
         }
         <% } else if (editMode) { %>
-        // In edit mode, only validate password if it's provided
         if (password.trim() !== '' && password.length < 6) {
             alert('Password must be at least 6 characters long');
             return false;

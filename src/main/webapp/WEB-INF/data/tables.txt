@@ -1,0 +1,37 @@
+f1-1,1,family,6,1,First floor family section,true
+f1-2,2,family,6,1,First floor family section,true
+f1-3,3,family,6,1,First floor family section,true
+f1-4,4,family,6,1,First floor family section,true
+r1-1,1,regular,4,1,First floor main section,true
+r1-2,2,regular,4,1,First floor main section,true
+r1-3,3,regular,4,1,First floor main section,true
+r1-4,4,regular,4,1,First floor main section,true
+r1-5,5,regular,4,1,First floor main section,true
+r1-6,6,regular,4,1,First floor main section,true
+r1-7,7,regular,4,1,First floor main section,true
+r1-8,8,regular,4,1,First floor main section,true
+r1-9,9,regular,4,1,First floor main section,true
+r1-10,10,regular,4,1,First floor main section,true
+c1-1,1,couple,2,1,First floor window section,true
+c1-2,2,couple,2,1,First floor window section,true
+c1-3,3,couple,2,1,First floor window section,true
+c1-4,4,couple,2,1,First floor window section,true
+f2-1,1,family,6,2,Second floor family section,true
+f2-2,2,family,6,2,Second floor family section,true
+f2-3,3,family,6,2,Second floor family section,true
+f2-4,4,family,6,2,Second floor family section,true
+f2-5,5,family,6,2,Second floor family section,true
+f2-6,6,family,6,2,Second floor family section,true
+l2-1,1,luxury,10,2,Second floor VIP section,true
+l2-2,2,luxury,10,2,Second floor VIP section,true
+l2-3,3,luxury,10,2,Second floor VIP section,true
+l2-4,4,luxury,10,2,Second floor VIP section,true
+c2-1,1,couple,2,2,Second floor balcony section,true
+c2-2,2,couple,2,2,Second floor balcony section,true
+c2-3,3,couple,2,2,Second floor balcony section,true
+c2-4,4,couple,2,2,Second floor balcony section,true
+c2-5,5,family,6,2,Second floor balcony section,true
+c2-6,6,luxury,10,2,Second floor balcony section,true
+c2-7,7,couple,2,2,,true
+l1-1,1,luxury,10,1,new luxuary table,true
+l1-2,2,luxury,10,1,test,true

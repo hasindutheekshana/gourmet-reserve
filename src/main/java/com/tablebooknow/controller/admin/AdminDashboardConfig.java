@@ -10,6 +10,7 @@ public class AdminDashboardConfig {
     public static List<Map<String, String>> getAdminMenu() {
         List<Map<String, String>> menu = new ArrayList<>();
 
+
         Map<String, String> dashboardItem = new HashMap<>();
         dashboardItem.put("id", "dashboard");
         dashboardItem.put("name", "Dashboard");
@@ -17,6 +18,7 @@ public class AdminDashboardConfig {
         dashboardItem.put("url", "/admin/dashboard");
         dashboardItem.put("roles", "admin,superadmin");
         menu.add(dashboardItem);
+
 
         Map<String, String> reservationsItem = new HashMap<>();
         reservationsItem.put("id", "reservations");
@@ -26,6 +28,7 @@ public class AdminDashboardConfig {
         reservationsItem.put("roles", "admin,superadmin");
         menu.add(reservationsItem);
 
+
         Map<String, String> tablesItem = new HashMap<>();
         tablesItem.put("id", "tables");
         tablesItem.put("name", "Table Management");
@@ -33,6 +36,7 @@ public class AdminDashboardConfig {
         tablesItem.put("url", "/admin/tables");
         tablesItem.put("roles", "admin,superadmin");
         menu.add(tablesItem);
+
 
         Map<String, String> usersItem = new HashMap<>();
         usersItem.put("id", "users");
@@ -42,6 +46,7 @@ public class AdminDashboardConfig {
         usersItem.put("roles", "admin,superadmin");
         menu.add(usersItem);
 
+
         Map<String, String> qrItem = new HashMap<>();
         qrItem.put("id", "qr");
         qrItem.put("name", "QR Scanner");
@@ -50,6 +55,7 @@ public class AdminDashboardConfig {
         qrItem.put("roles", "admin,superadmin");
         menu.add(qrItem);
 
+
         Map<String, String> settingsItem = new HashMap<>();
         settingsItem.put("id", "settings");
         settingsItem.put("name", "Settings");
@@ -57,6 +63,7 @@ public class AdminDashboardConfig {
         settingsItem.put("url", "/admin/settings");
         settingsItem.put("roles", "superadmin");
         menu.add(settingsItem);
+
 
         Map<String, String> profileItem = new HashMap<>();
         profileItem.put("id", "profile");
@@ -80,6 +87,7 @@ public class AdminDashboardConfig {
         userStatsWidget.put("roles", new String[]{"admin", "superadmin"});
         widgets.add(userStatsWidget);
 
+
         Map<String, Object> reservationStatsWidget = new HashMap<>();
         reservationStatsWidget.put("id", "reservation-stats");
         reservationStatsWidget.put("name", "Reservation Statistics");
@@ -95,6 +103,7 @@ public class AdminDashboardConfig {
         revenueStatsWidget.put("icon", "💰");
         revenueStatsWidget.put("roles", new String[]{"admin", "superadmin"});
         widgets.add(revenueStatsWidget);
+
 
         Map<String, Object> upcomingReservationsWidget = new HashMap<>();
         upcomingReservationsWidget.put("id", "upcoming-reservations");
@@ -134,7 +143,6 @@ public class AdminDashboardConfig {
         generalSettings.add(closingTime);
 
         settings.put("general", generalSettings);
-
         List<Map<String, Object>> reservationSettings = new ArrayList<>();
 
         Map<String, Object> maxDuration = new HashMap<>();
@@ -159,6 +167,7 @@ public class AdminDashboardConfig {
         reservationSettings.add(maxAdvanceDays);
 
         settings.put("reservation", reservationSettings);
+
 
         List<Map<String, Object>> emailSettings = new ArrayList<>();
 
@@ -194,4 +203,3 @@ public class AdminDashboardConfig {
 
         return settings;
     }
-}

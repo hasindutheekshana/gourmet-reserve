@@ -27,8 +27,12 @@
             background: var(--dark);
             font-family: 'Roboto', sans-serif;
             background-image:
+
+                linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9));
+
+
                 linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)),
-                url('assets/img/restaurant-bg.jpg');
+  
             background-size: cover;
             background-position: center;
             color: var(--text);

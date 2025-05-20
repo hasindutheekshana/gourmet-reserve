@@ -1,0 +1,212 @@
+:root {
+    --gold: #D4AF37;
+    --burgundy: #800020;
+    --dark: #1a1a1a;
+    --text: #e0e0e0;
+    --success: #28a745;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--dark);
+    font-family: 'Roboto', sans-serif;
+    background-image:
+        linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)),
+        url('../img/restaurant-bg.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.confirmation-container {
+    background: rgba(26, 26, 26, 0.95);
+    padding: 3rem;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    animation: fadeIn 0.5s ease-out;
+    text-align: center;
+    color: var(--text);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.checkmark-circle {
+    width: 100px;
+    height: 100px;
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: 50%;
+    border: 2px solid var(--success);
+    margin: 0 auto 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: scaleUp 0.5s ease-out forwards;
+}
+
+@keyframes scaleUp {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.checkmark {
+    width: 40px;
+    height: 80px;
+    border-right: 4px solid var(--success);
+    border-bottom: 4px solid var(--success);
+    transform: rotate(45deg) translate(-10px, -10px);
+    animation: checkmark 0.8s ease-out forwards;
+    opacity: 0;
+    transform-origin: center;
+}
+
+@keyframes checkmark {
+    0% { width: 0; height: 0; opacity: 0; }
+    50% { width: 0; height: 80px; opacity: 1; }
+    100% { width: 40px; height: 80px; opacity: 1; }
+}
+
+.confirmation-header {
+    margin-bottom: 2rem;
+}
+
+.confirmation-header h1 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.confirmation-header p {
+    color: var(--text);
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.confirmation-details {
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+}
+
+.confirmation-message {
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    color: var(--success);
+    font-weight: 500;
+}
+
+.reservation-id {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.reservation-id span {
+    color: var(--text);
+    opacity: 0.8;
+}
+
+.reservation-id strong {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+}
+
+.instruction {
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.qr-code-placeholder {
+    width: 150px;
+    height: 190px;
+    margin: 0 auto 1.5rem;
+}
+
+.qr-code-inner {
+    width: 150px;
+    height: 150px;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 2rem;
+    color: #000;
+    margin-bottom: 10px;
+}
+
+.qr-code-placeholder p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--burgundy));
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+    .confirmation-container {
+        padding: 2rem;
+    }
+
+    .confirmation-header h1 {
+        font-size: 2rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+}

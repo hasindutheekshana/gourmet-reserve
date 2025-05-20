@@ -1,0 +1,8 @@
+5486ac88-a515-4776-a6c7-c263c0ff0556,Bruschetta,Grilled bread rubbed with garlic and topped with olive oil;; salt;; tomatoes;; and basil,8.99,appetizer,true,
+5b864262-a517-4855-a8ce-8bac3f53f058,Fried Calamari,Lightly breaded and fried calamari served with marinara sauce,12.99,appetizer,true,
+17590371-a5ec-4149-b2fe-fba192d9947a,Filet Mignon,8oz premium beef tenderloin grilled to perfection,36.99,main,true,
+14366e35-265b-417b-a5df-f088c229b7bd,Grilled Atlantic Salmon,Fresh Atlantic salmon served with lemon butter sauce,28.99,main,true,
+fa15d65d-2d65-4b84-9c4c-0778fa0a7058,Fettuccine Alfredo,Homemade pasta in a rich;; creamy Parmesan sauce,18.99,main,true,
+f60bc231-b0c4-433b-a8a0-2ac4c4de7722,New York Cheesecake,Classic creamy cheesecake with graham cracker crust,8.99,dessert,true,
+41b7fd80-84b0-40a5-b827-7c2d02bef875,Tiramisu,Coffee-soaked ladyfingers layered with mascarpone cream,9.99,dessert,true,
+c52f3e87-927e-43f1-ac56-94991086f5cf,House Red Wine,Glass of our premium house red blend,8.00,drink,true,

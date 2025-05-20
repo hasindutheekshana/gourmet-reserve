@@ -1,8 +1,7 @@
-</div> <!-- Close main-content div -->
-    </div> <!-- Close dashboard-container div -->
+</div>
+    </div>
 
     <script>
-        // Auto-hide alerts after 5 seconds
         setTimeout(() => {
             try {
                 const messages = document.querySelectorAll('.message');

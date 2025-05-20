@@ -5,7 +5,7 @@
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.LocalTime" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -211,7 +211,6 @@
 </head>
 <body>
     <%
-        // Check if admin is logged in
         if (session.getAttribute("adminId") == null) {
             response.sendRedirect(request.getContextPath() + "/admin/login");
             return;
@@ -219,12 +218,10 @@
 
         String adminUsername = (String) session.getAttribute("adminUsername");
 
-        // Success/Error messages
         String successMessage = (String) request.getAttribute("successMessage");
         String errorMessage = (String) request.getAttribute("errorMessage");
         String warningMessage = (String) request.getAttribute("warningMessage");
 
-        // Get current servlet path for highlighting active navigation
         String currentServletPath = request.getServletPath();
     %>
 
@@ -233,20 +230,19 @@
             <h2 style="color: var(--gold); margin-bottom: 2rem;">Admin Panel</h2>
             <p style="margin-bottom: 2rem; color: #ccc;">Welcome, <%= adminUsername %></p>
 
-            <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-item <%= currentServletPath.contains("admin-dashboard") ? "active-section" : "" %>"> Dashboard</a>
-            <a href="${pageContext.request.contextPath}/admin/reservations" class="nav-item <%= currentServletPath.contains("admin-reservations") && !currentServletPath.contains("queue") ? "active-section" : "" %>"> Reservations</a>
-            <a href="${pageContext.request.contextPath}/admin/reservations/queue" class="nav-item <%= currentServletPath.contains("admin-reservation-queue") ? "active-section" : "" %>"> Reservation Queue</a>
-            <a href="${pageContext.request.contextPath}/admin/reservations/sorted" class="nav-item"> Sorted Reservations</a>
-            <a href="${pageContext.request.contextPath}/admin/reviews" class="nav-item <%= currentServletPath.contains("admin-reviews") ? "active-section" : "" %>"> Customer Reviews</a>
-            <a href="${pageContext.request.contextPath}/admin/tables" class="nav-item <%= currentServletPath.contains("admin-table") ? "active-section" : "" %>"> Table Management</a>
-            <a href="${pageContext.request.contextPath}/admin/users" class="nav-item <%= currentServletPath.contains("admin-users") ? "active-section" : "" %>"> User Management</a>
-            <a href="${pageContext.request.contextPath}/admin/menu" class="nav-item <%= currentServletPath.contains("admin-menu") ? "active-section" : "" %>"> Menu Management</a>
-            <a href="${pageContext.request.contextPath}/admin/qr" class="nav-item <%= currentServletPath.contains("admin-qr") ? "active-section" : "" %>"> QR Scanner</a>
+            <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-item <%= currentServletPath.contains("admin-dashboard") ? "active-section" : "" %>">📊 Dashboard</a>
+            <a href="${pageContext.request.contextPath}/admin/reservations" class="nav-item <%= currentServletPath.contains("admin-reservations") && !currentServletPath.contains("queue") ? "active-section" : "" %>">📅 Reservations</a>
+            <a href="${pageContext.request.contextPath}/admin/reservations/queue" class="nav-item <%= currentServletPath.contains("admin-reservation-queue") ? "active-section" : "" %>">🔄 Reservation Queue</a>
+            <a href="${pageContext.request.contextPath}/admin/reservations/sorted" class="nav-item">⏱️ Sorted Reservations</a>
+            <a href="${pageContext.request.contextPath}/admin/reviews" class="nav-item <%= currentServletPath.contains("admin-reviews") ? "active-section" : "" %>">⭐ Customer Reviews</a>
+            <a href="${pageContext.request.contextPath}/admin/tables" class="nav-item <%= currentServletPath.contains("admin-table") ? "active-section" : "" %>">🍽️ Table Management</a>
+            <a href="${pageContext.request.contextPath}/admin/users" class="nav-item <%= currentServletPath.contains("admin-users") ? "active-section" : "" %>">👥 User Management</a>
+            <a href="${pageContext.request.contextPath}/admin/menu" class="nav-item <%= currentServletPath.contains("admin-menu") ? "active-section" : "" %>">🍔 Menu Management</a>
+            <a href="${pageContext.request.contextPath}/admin/qr" class="nav-item <%= currentServletPath.contains("admin-qr") ? "active-section" : "" %>">📷 QR Scanner</a>
             <a href="${pageContext.request.contextPath}/admin/logout" class="logout-btn">Logout</a>
         </div>
 
         <div class="main-content">
-            <!-- Success/Error Messages -->
             <% if (successMessage != null) { %>
                 <div class="message success-message">
                     <%= successMessage %>

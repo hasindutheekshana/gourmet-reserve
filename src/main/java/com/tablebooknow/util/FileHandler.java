@@ -27,4 +27,5 @@ public class FileHandler {
     public static boolean fileExists(String filePath) {
         return Files.exists(Paths.get(filePath));
     }
+}
 
